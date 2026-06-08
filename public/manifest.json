@@ -1,0 +1,16 @@
+{
+  "short_name": "FourGym",
+  "name": "FourGym - Portal de Socios",
+  "icons": [
+    {
+      "src": "/src/assets/react.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f0b21",
+  "theme_color": "#0f0b21",
+  "display": "standalone",
+  "orientation": "portrait"
+}
