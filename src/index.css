@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-dark: #263238;
+  --color-brand-bg: #F1F8E9;
+  --color-brand-surface: #ffffff;
+  --color-text-primary: #37474F;
+  --color-text-secondary: #90A4AE;
+  --color-input-bg: #E8F5E9;
+  --color-brand-green: #B9F6CA;
+  --color-brand-green-strong: #81C784;
+  --color-accent-pink: #E91E63;
+  --color-accent-cyan: #00BCD4;
+  
+  --font-sans: "Outfit", "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* Base modifications */
+body {
+  @apply bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-brand-green selection:text-primary-dark;
+  background-color: #0f0b21; /* Match the premium dark layout from DetailPage */
+}
+
+/* Glassmorphism utility classes */
+.glass-panel {
+  @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-xl;
+}
+
+.glass-card {
+  @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 transition-all duration-300 hover:border-brand-green/30 hover:bg-white/10;
+}
+
+/* Scrollbar customizations */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-brand-green/30;
+}
