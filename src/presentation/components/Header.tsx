@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { User } from '../../domain/entities';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { apiService } from '../../data/apiService';
 
 interface HeaderProps {
   user: User | null;
@@ -8,7 +9,41 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const { isInstallable, installApp, showGuide, setShowGuide } = usePWAInstall();
+
+  const loadNotifications = async () => {
+    if (user && user.role === 'member') {
+      try {
+        const data = await apiService.getNotificacionesSocio(parseInt(user.id, 10));
+        setNotifications(data);
+      } catch (err) {
+        console.error('Error loading notifications:', err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const handleMarkAsRead = async (idNotificacionUsuario: number) => {
+    try {
+      const success = await apiService.marcarNotificacionLeida(idNotificacionUsuario, user?.name || 'WebSystem');
+      if (success) {
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.idNotificacionUsuario === idNotificacionUsuario ? { ...n, leida: true } : n
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full glass-panel border-b border-white/5 backdrop-blur-md">
@@ -48,7 +83,72 @@ export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
                 <span className="text-sm font-semibold text-white">{user.name}</span>
                 <span className="text-xs text-text-secondary">{user.email}</span>
               </div>
-              
+
+              {/* Notification Bell (only for members) */}
+              {user.role === 'member' && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-inner relative cursor-pointer"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                    </svg>
+                    {notifications.some((n) => !n.leida) && (
+                      <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-slate-800 animate-pulse"></span>
+                    )}
+                  </button>
+
+                  {/* Notifications Dropdown */}
+                  {showNotifications && (
+                    <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-slate-900 border border-white/10 p-3 shadow-2xl z-50 origin-top-right transition-all duration-300 max-h-96 overflow-y-auto">
+                      <div className="px-1 py-1.5 border-b border-white/5 flex items-center justify-between mb-2">
+                        <span className="text-xs font-bold text-white uppercase tracking-wider">Notificaciones</span>
+                        {notifications.some((n) => !n.leida) && (
+                          <span className="text-[10px] bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-full font-bold">
+                            Nuevas
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        {notifications.length === 0 ? (
+                          <p className="text-[10px] text-text-secondary text-center py-6">No tienes notificaciones por el momento.</p>
+                        ) : (
+                          notifications.map((n) => {
+                            let icon = 'ℹ️';
+                            if (n.tipo === 'Promocion') icon = '🏷️';
+                            if (n.tipo === 'Alerta') icon = '⚠️';
+                            return (
+                              <div
+                                key={n.idNotificacionUsuario}
+                                onClick={() => !n.leida && handleMarkAsRead(n.idNotificacionUsuario)}
+                                className={`p-2.5 rounded-xl transition-all text-left border border-transparent ${
+                                  n.leida
+                                    ? 'opacity-65 hover:bg-white/5 cursor-default'
+                                    : 'bg-white/5 border-white/5 hover:border-brand-green/20 cursor-pointer'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                                    <span>{icon}</span> {n.titulo}
+                                  </span>
+                                  {!n.leida && (
+                                    <span className="w-1.5 h-1.5 bg-accent-cyan rounded-full mt-1.5 shrink-0"></span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-text-secondary mt-1 leading-relaxed">
+                                  {n.mensaje}
+                                </p>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* User Avatar Initials */}
               <div className="relative group">
                 <button className="w-10 h-10 rounded-full bg-slate-800 border-2 border-brand-green-strong flex items-center justify-center font-bold text-brand-green shadow-inner hover:scale-105 transition-all duration-300">

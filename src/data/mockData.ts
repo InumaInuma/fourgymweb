@@ -1,4 +1,4 @@
-import type { Promo, GymClass, ClassSpot, Instructor, Reservation } from '../domain/entities';
+import type { Promo, GymClass, ClassSpot, Reservation } from '../domain/entities';
 
 export const mockPromos: Promo[] = [
   {
@@ -21,12 +21,7 @@ export const mockPromos: Promo[] = [
   }
 ];
 
-export const mockInstructors: Instructor[] = [
-  { id: 'inst-1', name: 'Carlos Mendoza', specialty: 'Salsa & Bachata' },
-  { id: 'inst-2', name: 'Laura Silva', specialty: 'Zumba Fitness' },
-  { id: 'inst-3', name: 'Bboy Jordan', specialty: 'Baile Urbano' },
-  { id: 'inst-4', name: 'Marta Rivas', specialty: 'Pilates & Ritmos' }
-];
+
 
 // Stateful lists for mockup demonstrations
 export let mockClassesState: GymClass[] = [
@@ -36,7 +31,7 @@ export let mockClassesState: GymClass[] = [
     rating: 4.9,
     image: 'https://images.unsplash.com/photo-1524594152303-9fd13543fe6e?q=80&w=600&auto=format&fit=crop',
     instructor: 'Carlos Mendoza',
-    instructorId: 'inst-1',
+    instructorId: '2',
     time: '6:00 p.m.',
     spotsTotal: 58,
     spotsReserved: 24,
@@ -49,7 +44,7 @@ export let mockClassesState: GymClass[] = [
     rating: 4.8,
     image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=600&auto=format&fit=crop',
     instructor: 'Laura Silva',
-    instructorId: 'inst-2',
+    instructorId: '3',
     time: '7:15 p.m.',
     spotsTotal: 58,
     spotsReserved: 38,
@@ -61,8 +56,8 @@ export let mockClassesState: GymClass[] = [
     title: 'Baile Urbano',
     rating: 5.0,
     image: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?q=80&w=600&auto=format&fit=crop',
-    instructor: 'Bboy Jordan',
-    instructorId: 'inst-3',
+    instructor: 'Alberto Gomez',
+    instructorId: '1',
     time: '8:30 p.m.',
     spotsTotal: 58,
     spotsReserved: 12,

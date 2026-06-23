@@ -6,6 +6,7 @@ export interface User {
   role: 'admin' | 'member';
   avatarUrl?: string;
   subscriptionType?: string;
+  idSocio?: number;
 }
 
 export interface Promo {
@@ -34,11 +35,15 @@ export interface GymClass {
   spotsReserved: number;
   price: number;
   roomName?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  totalCount?: number;
 }
 
 export interface ClassSpot {
   id: number;
   status: 0 | 1 | 2; // 0 = Free, 1 = Occupied, 2 = Selected/Yours
+  occupantName?: string;
 }
 
 export interface Reservation {

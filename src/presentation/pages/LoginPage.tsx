@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import type { User } from '../../domain/entities';
+import { usePWAInstall } from '../hooks/usePWAInstall';
+import { apiService } from '../../data/apiService';
 
 interface LoginPageProps {
   onLoginSuccess: (user: User) => void;
@@ -9,8 +11,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'admin' | 'member'>('member');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { isInstallable, installApp, showGuide, setShowGuide } = usePWAInstall();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
       setError('Por favor, ingresa tu correo electrónico');
@@ -24,24 +28,29 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       return;
     }
 
-    // Mock Login Success
-    const initials = email
-      .split('@')[0]
-      .substring(0, 2)
-      .toUpperCase();
+    setLoading(true);
+    setError('');
 
-    onLoginSuccess({
-      id: 'usr-' + Math.random().toString(36).substring(2, 11),
-      name: email.split('@')[0].toUpperCase(),
-      email: email,
-      initials: initials || 'GY',
-      role: role,
-      subscriptionType: role === 'member' ? 'Premium' : 'Admin Staff'
-    });
+    try {
+      const apiUser = await apiService.login(email);
+      
+      // Safety check: ensure selected UI role is matching the API role
+      if (apiUser.role !== role) {
+        setError(`El correo ingresado no corresponde a un perfil de ${role === 'member' ? 'Socio' : 'Administrador'}.`);
+        setLoading(false);
+        return;
+      }
+
+      onLoginSuccess(apiUser);
+    } catch (err: any) {
+      setError(err.message || 'Error al conectar con el servidor.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0f0b21] p-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f0b21] p-4 relative overflow-hidden">
       
       {/* Decorative glowing background bubbles */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-green/10 rounded-full blur-[100px] pointer-events-none"></div>
@@ -101,13 +110,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 <input
                   type="email"
                   id="email"
+                  disabled={loading}
                   placeholder="tu@correo.com"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     setError('');
                   }}
-                  className="w-full bg-[#263238]/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all"
+                  className="w-full bg-[#263238]/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green transition-all disabled:opacity-50"
                 />
               </div>
               {error && <p className="text-rose-400 text-xs mt-2 font-medium">{error}</p>}
@@ -115,9 +125,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
             <button
               type="submit"
-              className="w-full py-3.5 px-4 bg-brand-green hover:bg-brand-green-strong text-slate-950 font-black rounded-xl shadow-lg shadow-brand-green/20 hover:scale-[1.01] active:scale-95 transition-all duration-200 uppercase tracking-wider text-sm cursor-pointer"
+              disabled={loading}
+              className="w-full py-3.5 px-4 bg-brand-green hover:bg-brand-green-strong text-slate-950 font-black rounded-xl shadow-lg shadow-brand-green/20 hover:scale-[1.01] active:scale-95 transition-all duration-200 uppercase tracking-wider text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Continuar
+              {loading ? 'Ingresando...' : 'Continuar'}
             </button>
           </form>
 
@@ -130,12 +141,69 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
       </div>
 
-      {/* Mini floating award badge similar to FAB in mobile app */}
-      <div className="fixed bottom-6 right-6 w-12 h-12 rounded-2xl bg-slate-900 border border-brand-green/30 flex items-center justify-center text-brand-green shadow-lg shadow-black/50 cursor-pointer hover:scale-105 active:scale-95 transition-all">
-        <svg className="w-5 h-5 text-brand-green-strong" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
-      </div>
+      {/* PWA download button below card */}
+      {isInstallable && (
+        <div className="mt-6 text-center z-10">
+          <button
+            onClick={installApp}
+            className="inline-flex items-center space-x-2 px-5 py-3 rounded-2xl bg-brand-green/10 border border-brand-green/30 hover:bg-brand-green hover:text-slate-950 text-brand-green font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg shadow-brand-green/5 cursor-pointer hover:scale-[1.02] active:scale-95 animate-pulse-slow"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <span>Instalar Aplicación</span>
+          </button>
+        </div>
+      )}
+
+
+
+      {/* Guide dialog modal for manual installation instructions */}
+      {showGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-6 relative shadow-2xl scale-in text-left">
+            <button
+              onClick={() => setShowGuide(false)}
+              className="absolute top-4 right-4 text-text-secondary hover:text-white transition-colors cursor-pointer"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h3 className="text-lg font-black text-white flex items-center gap-2">
+              📥 Instalar Aplicación FourGym
+            </h3>
+            <p className="text-xs text-text-secondary mt-2">
+              Sigue las sencillas instrucciones según tu dispositivo para tener el acceso directo en tu celular o computadora:
+            </p>
+
+            <div className="mt-5 space-y-4 text-xs">
+              <div className="bg-slate-950/50 p-3 rounded-xl border border-white/5">
+                <span className="font-bold text-brand-green block mb-1">💻 Computadoras (Chrome, Edge, Opera)</span>
+                <p className="text-slate-300">Haz clic en el ícono de **Instalar** (pantalla con flecha hacia abajo o botón "+") ubicado a la derecha de la barra de direcciones de tu navegador.</p>
+              </div>
+
+              <div className="bg-slate-950/50 p-3 rounded-xl border border-white/5">
+                <span className="font-bold text-accent-cyan block mb-1">📱 Dispositivos iPhone / iPad (Safari)</span>
+                <p className="text-slate-300">Presiona el botón de **Compartir** (cuadrado con flecha hacia arriba) en la barra inferior y luego selecciona la opción **"Agregar a inicio"** o **"Add to Home Screen"**.</p>
+              </div>
+
+              <div className="bg-slate-950/50 p-3 rounded-xl border border-white/5">
+                <span className="font-bold text-amber-400 block mb-1">🤖 Dispositivos Android (Chrome)</span>
+                <p className="text-slate-300">Haz clic en los tres puntos del menú del navegador y selecciona **"Instalar aplicación"** o **"Agregar a la pantalla principal"**.</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowGuide(false)}
+              className="mt-6 w-full py-2.5 bg-brand-green hover:bg-brand-green-strong text-slate-950 font-black rounded-xl uppercase tracking-wider text-xs transition-colors cursor-pointer"
+            >
+              Cerrar Guía
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
