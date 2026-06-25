@@ -4,6 +4,8 @@ import { apiService } from '../../data/apiService';
 import { useReservasHub } from '../../data/useReservasHub';
 import { SeatMap } from '../components/SeatMap';
 import { AdminDashboard } from '../components/AdminDashboard';
+import { TrainerDashboard } from '../components/trainer/TrainerDashboard';
+import { NutritionistDashboard } from '../components/nutritionist/NutritionistDashboard';
 import { MemberSidebar } from '../components/member/MemberSidebar';
 import { MemberBottomBar } from '../components/member/MemberBottomBar';
 import { MemberBookings } from '../components/member/MemberBookings';
@@ -266,6 +268,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
 
   if (user.role === 'admin') {
     return <AdminDashboard user={user} onLogout={onLogout} />;
+  }
+
+  if (user.role === 'trainer') {
+    return <TrainerDashboard user={user} onLogout={onLogout} />;
+  }
+
+  if (user.role === 'nutritionist') {
+    return <NutritionistDashboard user={user} onLogout={onLogout} />;
   }
 
   return (

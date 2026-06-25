@@ -9,7 +9,7 @@ interface LoginPageProps {
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState<'admin' | 'member'>('member');
+  const [role, setRole] = useState<'admin' | 'member' | 'trainer' | 'nutritionist'>('member');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { isInstallable, installApp, showGuide, setShowGuide } = usePWAInstall();
@@ -36,7 +36,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       
       // Safety check: ensure selected UI role is matching the API role
       if (apiUser.role !== role) {
-        setError(`El correo ingresado no corresponde a un perfil de ${role === 'member' ? 'Socio' : 'Administrador'}.`);
+        let roleNameStr = 'Socio';
+        if (role === 'admin') roleNameStr = 'Administrador';
+        else if (role === 'trainer') roleNameStr = 'Trainer';
+        else if (role === 'nutritionist') roleNameStr = 'Nutricionista';
+
+        setError(`El correo ingresado no corresponde a un perfil de ${roleNameStr}.`);
         setLoading(false);
         return;
       }
@@ -61,10 +66,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         
         {/* Top brand header area */}
         <div className="bg-[#263238] p-8 text-center border-b border-white/5 relative">
-          <div className="w-16 h-16 mx-auto bg-slate-900 border-2 border-brand-green rounded-2xl flex items-center justify-center shadow-lg shadow-brand-green/10 animate-pulse">
-            <svg className="w-8 h-8 text-brand-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+          <div className="w-16 h-16 mx-auto bg-slate-900 border border-brand-green/30 rounded-2xl flex items-center justify-center shadow-lg shadow-brand-green/5 overflow-hidden">
+            <img src="/logo.png" alt="FourGym Logo" className="w-full h-full object-contain p-1" />
           </div>
           <h1 className="text-3xl font-black text-white mt-4 tracking-tighter">
             FOUR <span className="text-brand-green">GYM</span>
@@ -76,13 +79,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         <div className="p-8 bg-slate-950/40">
           
           {/* Role selector tabs */}
-          <div className="flex bg-slate-950 p-1 rounded-xl mb-6 border border-white/5">
+          <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-2xl mb-6 border border-white/5">
             <button
               type="button"
               onClick={() => setRole('member')}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 role === 'member'
-                  ? 'bg-brand-green text-slate-950 shadow-md'
+                  ? 'bg-brand-green text-slate-950 shadow-md font-black'
                   : 'text-text-secondary hover:text-white'
               }`}
             >
@@ -90,10 +93,32 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             </button>
             <button
               type="button"
+              onClick={() => setRole('trainer')}
+              className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                role === 'trainer'
+                  ? 'bg-brand-green text-slate-950 shadow-md font-black'
+                  : 'text-text-secondary hover:text-white'
+              }`}
+            >
+              Trainer
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole('nutritionist')}
+              className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                role === 'nutritionist'
+                  ? 'bg-brand-green text-slate-950 shadow-md font-black'
+                  : 'text-text-secondary hover:text-white'
+              }`}
+            >
+              Nutricionista
+            </button>
+            <button
+              type="button"
               onClick={() => setRole('admin')}
-              className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              className={`py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 role === 'admin'
-                  ? 'bg-brand-green text-slate-950 shadow-md'
+                  ? 'bg-brand-green text-slate-950 shadow-md font-black'
                   : 'text-text-secondary hover:text-white'
               }`}
             >

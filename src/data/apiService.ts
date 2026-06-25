@@ -71,13 +71,33 @@ export const apiService = {
       }
 
       const data = res.data;
+      
+      let role: 'admin' | 'member' | 'trainer' | 'nutritionist' | 'instructor' = 'member';
+      let subscriptionType = data.tipoSuscripcion || 'Premium';
+      
+      if (data.idRol === 1) {
+        role = 'admin';
+        subscriptionType = 'Admin Staff';
+      } else if (data.idRol === 2) {
+        role = 'member';
+      } else if (data.idRol === 3) {
+        role = 'instructor';
+        subscriptionType = 'Dance Instructor';
+      } else if (data.idRol === 4) {
+        role = 'trainer';
+        subscriptionType = 'Musculación Coach';
+      } else if (data.idRol === 5) {
+        role = 'nutritionist';
+        subscriptionType = 'Nutricionista Staff';
+      }
+
       return {
         id: data.idUsuario.toString(),
         name: `${data.nombre} ${data.apellidoPaterno}`.toUpperCase(),
         email: data.correo,
         initials: `${data.nombre[0] || ''}${data.apellidoPaterno[0] || ''}`.toUpperCase() || 'GY',
-        role: data.idRol === 1 ? 'admin' : 'member',
-        subscriptionType: data.tipoSuscripcion || (data.idRol === 1 ? 'Admin Staff' : 'Premium'),
+        role,
+        subscriptionType,
         idSocio: data.idSocio || undefined,
       };
     } catch (err: any) {
@@ -311,6 +331,207 @@ export const apiService = {
       return res.isSuccess && res.data;
     } catch (err) {
       return false;
+    }
+  },
+
+  // ==========================================================
+  // MÓDULO DE NUTRICIÓN
+  // ==========================================================
+
+  async getSocios(): Promise<any[]> {
+    try {
+      const res = await api.get<ApiResponse<any[]>>('/Nutricion/socios');
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener los socios.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al obtener los socios.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async getHistorialClinico(idSocio: number): Promise<any> {
+    try {
+      const res = await api.get<ApiResponse<any>>(`/Nutricion/historial/${idSocio}`);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener historial clínico.');
+      }
+      return res.data;
+    } catch (err: any) {
+      // Si retorna 404 o null, significa que no tiene historial clínico previo, no arrojamos error
+      return null;
+    }
+  },
+
+  async guardarHistorialClinico(historial: {
+    idSocio: number;
+    idNutricionista: number;
+    objetivoGeneral: string;
+    antecedentesMedicos?: string;
+    alergiasAlimentarias?: string;
+    observaciones?: string;
+    usuarioModificacion?: string;
+  }): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Nutricion/historial', historial);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al guardar historial clínico.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al guardar historial clínico.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async registrarEvaluacionAntropometrica(evaluacion: {
+    idSocio: number;
+    idNutricionista: number;
+    peso: number;
+    porcentajeGrasa: number;
+    porcentajeMusculo: number;
+    grasaVisceral: number;
+    edadMetabolica: number;
+    usuarioModificacion?: string;
+  }): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Nutricion/evaluacion', evaluacion);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al registrar evaluación antropométrica.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al registrar evaluación antropométrica.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async getEvaluacionesAntropometricas(idSocio: number): Promise<any[]> {
+    try {
+      const res = await api.get<ApiResponse<any[]>>(`/Nutricion/evaluaciones/${idSocio}`);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener evaluaciones antropométricas.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al obtener evaluaciones antropométricas.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async guardarPlanAlimentario(plan: {
+    idSocio: number;
+    idNutricionista: number;
+    caloriasObjetivo: number;
+    porcentajeProteina: number;
+    porcentajeCarbohidratos: number;
+    porcentajeGrasa: number;
+    desayuno: string;
+    colacion1?: string;
+    almuerzo: string;
+    merienda?: string;
+    cena: string;
+    usuarioModificacion?: string;
+  }): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Nutricion/plan', plan);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al guardar el plan alimentario.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al guardar el plan alimentario.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async getPlanAlimentarioActivo(idSocio: number): Promise<any> {
+    try {
+      const res = await api.get<ApiResponse<any>>(`/Nutricion/plan-activo/${idSocio}`);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener el plan alimentario activo.');
+      }
+      return res.data;
+    } catch (err: any) {
+      return null;
+    }
+  },
+
+  // ==========================================================
+  // MÓDULO DE ENTRENAMIENTO
+  // ==========================================================
+
+  async registrarEvaluacionFisicaTrainer(evaluacion: {
+    idSocio: number;
+    idEntrenador: number;
+    peso: number;
+    masaMuscular: number;
+    porcentajeGrasa: number;
+    notasEvolucion?: string;
+    usuarioModificacion?: string;
+  }): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Entrenamiento/evaluacion', evaluacion);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al registrar la evaluación física.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al registrar la evaluación física.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async getEvaluacionesFisicasTrainer(idSocio: number): Promise<any[]> {
+    try {
+      const res = await api.get<ApiResponse<any[]>>(`/Entrenamiento/evaluaciones/${idSocio}`);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener las evaluaciones físicas.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al obtener las evaluaciones físicas.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async asignarRutinaTrainer(rutina: {
+    idSocio: number;
+    idEntrenador: number;
+    nombreRutina: string;
+    objetivo: string;
+    ejercicios: Array<{
+      nombreEjercicio: string;
+      grupoMuscular: string;
+      series: number;
+      repeticiones: string;
+      pesoAsignado?: string;
+      rpeObjetivo?: number;
+    }>;
+    usuarioModificacion?: string;
+  }): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Entrenamiento/rutina', rutina);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al asignar la rutina.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al asignar la rutina.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async getRutinaActivaTrainer(idSocio: number): Promise<any> {
+    try {
+      const res = await api.get<ApiResponse<any>>(`/Entrenamiento/rutina-activa/${idSocio}`);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener la rutina activa.');
+      }
+      return res.data;
+    } catch (err: any) {
+      return null;
     }
   },
 };

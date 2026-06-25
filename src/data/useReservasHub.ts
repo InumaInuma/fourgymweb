@@ -42,6 +42,11 @@ export const useReservasHub = ({
   const prevClaseIdRef = useRef<number | null>(null);
 
   useEffect(() => {
+    // Si no hay una clase seleccionada, no iniciamos conexión SignalR ya que no hay asientos que monitorear
+    if (idClase === null) {
+      return;
+    }
+
     // Crear la conexión si aún no existe
     if (!connectionRef.current) {
       connectionRef.current = new signalR.HubConnectionBuilder()
@@ -86,7 +91,11 @@ export const useReservasHub = ({
           await connection.invoke('UnirseAClase', idClase);
           prevClaseIdRef.current = idClase;
         }
-      } catch (err) {
+      } catch (err: any) {
+        // Silenciar errores de aborto causados por el desmontado inmediato en React 18 Strict Mode
+        if (err.name === 'AbortError' || err.message?.includes('stopped during negotiation')) {
+          return;
+        }
         console.error('[SignalR] Error al conectar al hub de reservas:', err);
       }
     };

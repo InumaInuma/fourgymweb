@@ -1,6 +1,12 @@
 import React from 'react';
 import type { Instructor } from '../../../domain/entities';
 
+const standardHours = [
+  '06:00 a.m.', '07:00 a.m.', '08:00 a.m.', '09:00 a.m.', '10:00 a.m.', '11:00 a.m.', '12:00 p.m.',
+  '01:00 p.m.', '02:00 p.m.', '03:00 p.m.', '04:00 p.m.', '05:00 p.m.', '06:00 p.m.', '07:00 p.m.',
+  '08:00 p.m.', '09:00 p.m.', '10:00 p.m.', '11:00 p.m.', '12:00 a.m.'
+];
+
 interface SingleSchedulerFormProps {
   classTitle: string;
   setClassTitle: (t: string) => void;
@@ -10,8 +16,10 @@ interface SingleSchedulerFormProps {
   setRoomName: (r: string) => void;
   classDate: string;
   setClassDate: (d: string) => void;
-  classTime: string;
-  setClassTime: (t: string) => void;
+  classStartTime: string;
+  setClassStartTime: (t: string) => void;
+  classEndTime: string;
+  setClassEndTime: (t: string) => void;
   classPrice: string;
   setClassPrice: (p: string) => void;
   formSuccess: boolean;
@@ -28,8 +36,10 @@ export const SingleSchedulerForm: React.FC<SingleSchedulerFormProps> = ({
   setRoomName,
   classDate,
   setClassDate,
-  classTime,
-  setClassTime,
+  classStartTime,
+  setClassStartTime,
+  classEndTime,
+  setClassEndTime,
   classPrice,
   setClassPrice,
   formSuccess,
@@ -89,33 +99,6 @@ export const SingleSchedulerForm: React.FC<SingleSchedulerFormProps> = ({
 
         <div>
           <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-            Fecha
-          </label>
-          <input
-            type="date"
-            required
-            value={classDate}
-            onChange={(e) => setClassDate(e.target.value)}
-            className="w-full bg-[#263238]/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-green"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-            Horario
-          </label>
-          <input
-            type="text"
-            required
-            placeholder="Ej. 6:00 p.m. o 8:30 p.m."
-            value={classTime}
-            onChange={(e) => setClassTime(e.target.value)}
-            className="w-full bg-[#263238]/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-green"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
             Precio de Entrada (S/)
           </label>
           <input
@@ -127,6 +110,55 @@ export const SingleSchedulerForm: React.FC<SingleSchedulerFormProps> = ({
             onChange={(e) => setClassPrice(e.target.value)}
             className="w-full bg-[#263238]/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-green"
           />
+        </div>
+
+        <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+              Fecha
+            </label>
+            <input
+              type="date"
+              required
+              value={classDate}
+              onChange={(e) => setClassDate(e.target.value)}
+              className="w-full bg-[#263238]/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-green"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+              Hora Inicio
+            </label>
+            <select
+              value={classStartTime}
+              onChange={(e) => setClassStartTime(e.target.value)}
+              className="w-full bg-[#263238]/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-green font-mono text-sm"
+            >
+              {standardHours.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+              Hora Fin
+            </label>
+            <select
+              value={classEndTime}
+              onChange={(e) => setClassEndTime(e.target.value)}
+              className="w-full bg-[#263238]/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-green font-mono text-sm"
+            >
+              {standardHours.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

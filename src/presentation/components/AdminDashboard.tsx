@@ -27,6 +27,10 @@ const standardHours = [
   '08:00 p.m.', '09:00 p.m.', '10:00 p.m.', '11:00 p.m.', '12:00 a.m.'
 ];
 
+const getLocalDateString = (date = new Date()): string => {
+  return date.toLocaleDateString('sv-SE');
+};
+
 
 interface AdminDashboardProps {
   user: User;
@@ -54,10 +58,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
   const [classTitle, setClassTitle] = useState('Zumba Fitness');
   const [instructorId, setInstructorId] = useState('');
   const [roomName, setRoomName] = useState('Salón Principal');
-  const [classDate, setClassDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [classTime, setClassTime] = useState('6:00 p.m.');
+  const [classDate, setClassDate] = useState(() => getLocalDateString());
+  const [classStartTime, setClassStartTime] = useState('06:00 p.m.');
+  const [classEndTime, setClassEndTime] = useState('07:00 p.m.');
   const [classPrice, setClassPrice] = useState('20.00');
   const [formSuccess, setFormSuccess] = useState(false);
+
+  const handleStartTimeChange = (time: string) => {
+    setClassStartTime(time);
+    const startIndex = standardHours.indexOf(time);
+    if (startIndex !== -1 && startIndex < standardHours.length - 1) {
+      setClassEndTime(standardHours[startIndex + 1]);
+    }
+  };
 
   // States for class editing
   const [editingClass, setEditingClass] = useState<GymClass | null>(null);
@@ -73,11 +86,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
   const [schedulingMode, setSchedulingMode] = useState<'single' | 'bulk'>('single');
 
   // Bulk schedule states
-  const [bulkStartDate, setBulkStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [bulkStartDate, setBulkStartDate] = useState(() => getLocalDateString());
   const [bulkEndDate, setBulkEndDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 30); // 1 month default
-    return d.toISOString().split('T')[0];
+    return getLocalDateString(d);
   });
   const [bulkDays, setBulkDays] = useState<number[]>([1, 2, 3, 4, 5]); // default: Lunes a Viernes
   const [bulkSlots, setBulkSlots] = useState<BulkSlot[]>([
@@ -91,8 +104,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
   // Paging and filter states
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [filterStartDate, setFilterStartDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [filterEndDate, setFilterEndDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [filterStartDate, setFilterStartDate] = useState(() => getLocalDateString());
+  const [filterEndDate, setFilterEndDate] = useState(() => getLocalDateString());
   const [totalClassesCount, setTotalClassesCount] = useState(0);
 
   // Fetch classes list with paging and filter parameters
@@ -123,7 +136,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
   };
 
   const handleClearFilter = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     setFilterStartDate(today);
     setFilterEndDate(today);
     setCurrentPage(1);
@@ -377,7 +390,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
     e.preventDefault();
     
     try {
-      const { inicio, fin } = parseTimeToDateTime(classTime, classDate);
+      const { inicio } = parseTimeToDateTime(classStartTime, classDate);
+      const finParsed = parseTimeToDateTime(classEndTime, classDate).inicio;
       await apiService.programarClase({
         titulo: classTitle,
         idInstructor: parseInt(instructorId, 10),
@@ -385,14 +399,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
         capacidad: 58,
         precio: isNaN(parseFloat(classPrice)) ? 20.0 : parseFloat(classPrice),
         fechaInicio: inicio,
-        fechaFin: fin,
+        fechaFin: finParsed,
         usuarioModificacion: 'AdminStaff'
       });
 
       setFormSuccess(true);
       setTimeout(() => setFormSuccess(false), 3000);
       await loadClasses();
-      setClassTime('');
     } catch (err) {
       console.error('Error scheduling class:', err);
     }
@@ -580,8 +593,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
                     setRoomName={setRoomName}
                     classDate={classDate}
                     setClassDate={setClassDate}
-                    classTime={classTime}
-                    setClassTime={setClassTime}
+                    classStartTime={classStartTime}
+                    setClassStartTime={handleStartTimeChange}
+                    classEndTime={classEndTime}
+                    setClassEndTime={setClassEndTime}
                     classPrice={classPrice}
                     setClassPrice={setClassPrice}
                     formSuccess={formSuccess}

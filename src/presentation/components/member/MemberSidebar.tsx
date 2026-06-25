@@ -64,18 +64,8 @@ export const MemberSidebar: React.FC<MemberSidebarProps> = ({
         <div className="flex flex-col">
           <div className="h-16 flex items-center px-5 border-b border-white/5 select-none overflow-hidden justify-between">
             <div className="flex items-center space-x-3 min-w-[150px]">
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-brand-green/30 flex items-center justify-center shadow-lg shadow-brand-green/10 shrink-0">
-                <svg
-                  className="w-5 h-5 text-brand-green animate-pulse"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-brand-green/30 flex items-center justify-center shadow-lg shadow-brand-green/10 overflow-hidden shrink-0">
+                <img src="/logo.png" alt="FourGym Logo" className="w-full h-full object-contain p-0.5" />
               </div>
               <span
                 className={`text-lg font-black tracking-tight text-white transition-opacity duration-200 ${

@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   initials: string;
-  role: 'admin' | 'member';
+  role: 'admin' | 'member' | 'trainer' | 'nutritionist' | 'instructor';
   avatarUrl?: string;
   subscriptionType?: string;
   idSocio?: number;
