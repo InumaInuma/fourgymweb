@@ -62,6 +62,37 @@ export const parseTimeToDateTime = (timeStr: string, dateStr?: string): { inicio
   };
 };
 
+const mapDtoToUser = (data: any): User => {
+  let role: 'admin' | 'member' | 'trainer' | 'nutritionist' | 'instructor' = 'member';
+  let subscriptionType = data.tipoSuscripcion || 'Premium';
+  
+  if (data.idRol === 1) {
+    role = 'admin';
+    subscriptionType = 'Admin Staff';
+  } else if (data.idRol === 2) {
+    role = 'member';
+  } else if (data.idRol === 3) {
+    role = 'instructor';
+    subscriptionType = 'Dance Instructor';
+  } else if (data.idRol === 4) {
+    role = 'trainer';
+    subscriptionType = 'Musculación Coach';
+  } else if (data.idRol === 5) {
+    role = 'nutritionist';
+    subscriptionType = 'Nutricionista Staff';
+  }
+
+  return {
+    id: data.idUsuario.toString(),
+    name: `${data.nombre} ${data.apellidoPaterno}`.toUpperCase(),
+    email: data.correo,
+    initials: `${data.nombre[0] || ''}${data.apellidoPaterno[0] || ''}`.toUpperCase() || 'GY',
+    role,
+    subscriptionType,
+    idSocio: data.idSocio || undefined,
+  };
+};
+
 export const apiService = {
   async login(email: string): Promise<User> {
     try {
@@ -69,40 +100,73 @@ export const apiService = {
       if (!res.isSuccess) {
         throw new Error(res.message || 'Error en la autenticación.');
       }
-
-      const data = res.data;
-      
-      let role: 'admin' | 'member' | 'trainer' | 'nutritionist' | 'instructor' = 'member';
-      let subscriptionType = data.tipoSuscripcion || 'Premium';
-      
-      if (data.idRol === 1) {
-        role = 'admin';
-        subscriptionType = 'Admin Staff';
-      } else if (data.idRol === 2) {
-        role = 'member';
-      } else if (data.idRol === 3) {
-        role = 'instructor';
-        subscriptionType = 'Dance Instructor';
-      } else if (data.idRol === 4) {
-        role = 'trainer';
-        subscriptionType = 'Musculación Coach';
-      } else if (data.idRol === 5) {
-        role = 'nutritionist';
-        subscriptionType = 'Nutricionista Staff';
-      }
-
-      return {
-        id: data.idUsuario.toString(),
-        name: `${data.nombre} ${data.apellidoPaterno}`.toUpperCase(),
-        email: data.correo,
-        initials: `${data.nombre[0] || ''}${data.apellidoPaterno[0] || ''}`.toUpperCase() || 'GY',
-        role,
-        subscriptionType,
-        idSocio: data.idSocio || undefined,
-      };
+      return mapDtoToUser(res.data);
     } catch (err: any) {
       const errMsg = err.response?.data?.message || err.message || 'Error en la autenticación.';
       throw new Error(errMsg);
+    }
+  },
+
+  async checkDni(dni: string): Promise<{
+    idPersona: number;
+    nombre: string;
+    apellidoPaterno: string;
+    apellidoMaterno: string;
+    correo: string;
+    idUsuario: number;
+    isRegistered: boolean;
+    idRol: number;
+  }> {
+    try {
+      const res = await api.post<ApiResponse<any>>('/Auth/check-dni', { numeroDocumento: dni });
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'El DNI no está registrado en el sistema.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al verificar DNI.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async registerPassword(dni: string, password: string, email: string): Promise<User> {
+    try {
+      const res = await api.post<ApiResponse<any>>('/Auth/register-password', {
+        numeroDocumento: dni,
+        password: password,
+        correo: email
+      });
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al registrar la contraseña.');
+      }
+      return mapDtoToUser(res.data);
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al registrar contraseña.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async loginDni(dni: string, password: string): Promise<User> {
+    try {
+      const res = await api.post<ApiResponse<any>>('/Auth/login-dni', {
+        numeroDocumento: dni,
+        password: password
+      });
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al iniciar sesión.');
+      }
+      return mapDtoToUser(res.data);
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error en el inicio de sesión.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async logout(): Promise<void> {
+    try {
+      await api.post<ApiResponse<any>>('/Auth/logout');
+    } catch (err) {
+      // Ignorar errores al cerrar sesión en backend para garantizar que el frontend siempre limpie la sesión local
     }
   },
 

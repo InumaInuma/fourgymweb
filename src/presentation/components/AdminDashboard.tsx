@@ -10,6 +10,7 @@ import { ClassEditModal } from './admin/ClassEditModal';
 import { AttendanceSeatMap } from './admin/AttendanceSeatMap';
 import { SeatDetailsPanel } from './admin/SeatDetailsPanel';
 import { AdminSidebar } from './admin/AdminSidebar';
+import { AttendanceClassSelector } from './admin/AttendanceClassSelector';
 
 interface BulkSlot {
   id: string;
@@ -108,6 +109,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
   const [filterEndDate, setFilterEndDate] = useState(() => getLocalDateString());
   const [totalClassesCount, setTotalClassesCount] = useState(0);
 
+  // Attendance tab specific states
+  const [attendanceDate, setAttendanceDate] = useState(() => getLocalDateString());
+  const [attendanceClasses, setAttendanceClasses] = useState<GymClass[]>([]);
+
   // Fetch classes list with paging and filter parameters
   const loadClasses = async (page = currentPage, start = filterStartDate, end = filterEndDate) => {
     try {
@@ -128,6 +133,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
     } catch (err) {
       console.error('Error loading classes in admin dashboard:', err);
     }
+  };
+
+  const loadAttendanceClasses = async (date: string) => {
+    try {
+      const data = await apiService.getClases(1, 100, date, date);
+      setAttendanceClasses(data);
+      if (data.length > 0) {
+        const stillExists = data.some((c) => c.id === selectedClass?.id);
+        if (!stillExists) {
+          setSelectedClass(data[0]);
+        }
+      } else {
+        setSelectedClass(null);
+      }
+    } catch (err) {
+      console.error('Error loading attendance classes:', err);
+    }
+  };
+
+  const handleAttendanceDateChange = (date: string) => {
+    setAttendanceDate(date);
+    loadAttendanceClasses(date);
   };
 
   const handleApplyFilter = () => {
@@ -312,6 +339,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
     loadClasses();
     loadInstructors();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'attendance') {
+      loadAttendanceClasses(attendanceDate);
+    }
+  }, [activeTab]);
 
   // Load reservations and seat states whenever the selected class or activeTab changes
   const loadClassReservations = async () => {
@@ -644,30 +677,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
           {activeTab === 'attendance' && (
             <div className="space-y-6">
               
-              {/* Active Class Selector for check-in monitoring */}
-              <div className="glass-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold text-white">Validar Asistencias por Clase</h2>
-                  <p className="text-xs text-text-secondary mt-0.5">Selecciona la sesión para auditar la asistencia en el mapa de asientos</p>
-                </div>
-                <div className="relative">
-                  <select
-                    value={selectedClass?.id || ''}
-                    onChange={(e) => {
-                      const found = classes.find((c) => c.id === e.target.value);
-                      if (found) setSelectedClass(found);
-                    }}
-                    className="bg-slate-950 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-green"
-                  >
-                    <option value="" disabled>Selecciona una clase</option>
-                    {classes.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.title} ({c.time})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              {/* Active Class Selector with Date Filter for check-in monitoring */}
+              <AttendanceClassSelector
+                attendanceDate={attendanceDate}
+                attendanceClasses={attendanceClasses}
+                selectedClass={selectedClass}
+                onAttendanceDateChange={handleAttendanceDateChange}
+                onSelectClass={setSelectedClass}
+              />
 
               {/* Attendance Layout Grid split split */}
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

@@ -22,7 +22,7 @@ export const API_URL = isLocal
 const api = axios.create({
   baseURL: API_URL,
   headers: {},
-  // withCredentials: true, (disabled because backend uses AllowAnyOrigin/AllowAll * CORS policy and does not use cookies)
+  withCredentials: true, // Requerido para enviar y recibir Cookies HttpOnly en peticiones cross-origin
 }) as CustomAxiosInstance;
 
 // Request Interceptor
@@ -38,6 +38,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    // Si la API responde con 401 Unauthorized, la sesión expiró o la cookie es inválida
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('fourgym_user');
+      window.location.href = '/'; // Redirigir al login
+    }
     return Promise.reject(error);
   }
 );
