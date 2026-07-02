@@ -93,6 +93,45 @@ const mapDtoToUser = (data: any): User => {
   };
 };
 
+export interface PlanMembresia {
+  id: number;
+  nombre: string;
+  duracionMeses: number;
+  precio: number;
+  activo: boolean;
+}
+
+export interface SocioConMembresia {
+  idSocio: number;
+  idPersona: number;
+  nombre: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  numeroDocumento: string;
+  telefono?: string;
+  fechaNacimiento?: string;
+  edad?: number;
+  tipoSuscripcion: string;
+  estadoSuscripcion: string;
+  fechaInicioMembresia?: string;
+  fechaFinMembresia?: string;
+  precioPagado?: number;
+  nombrePlan?: string;
+  duracionMeses?: number;
+}
+
+export interface RegistrarSocioRequest {
+  nombre: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  numeroDocumento: string;
+  idTipoDocumento?: number;
+  telefono: string;
+  fechaNacimiento: string;
+  idPlanMembresia: number;
+  precioPagado: number;
+}
+
 export const apiService = {
   async login(email: string): Promise<User> {
     try {
@@ -598,4 +637,78 @@ export const apiService = {
       return null;
     }
   },
+
+  // ==========================================================
+  // MÓDULO DE MEMBRESÍAS Y MATRÍCULAS
+  // ==========================================================
+
+  async getPlanesMembresias(): Promise<PlanMembresia[]> {
+    try {
+      const res = await api.get<ApiResponse<PlanMembresia[]>>('/Membresias/planes');
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener los planes de membresía.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al obtener los planes de membresía.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async crearPlanMembresia(plan: Omit<PlanMembresia, 'id' | 'activo'>): Promise<number> {
+    try {
+      const res = await api.post<ApiResponse<number>>('/Membresias/planes', {
+        nombre: plan.nombre,
+        duracionMeses: plan.duracionMeses,
+        precio: plan.precio,
+        activo: true
+      });
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al crear el plan de membresía.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al crear el plan de membresía.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async actualizarPlanMembresia(id: number, plan: PlanMembresia): Promise<boolean> {
+    try {
+      const res = await api.put<ApiResponse<boolean>>(`/Membresias/planes/${id}`, plan);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al actualizar el plan de membresía.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al actualizar el plan de membresía.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async getSociosConMembresias(): Promise<SocioConMembresia[]> {
+    try {
+      const res = await api.get<ApiResponse<SocioConMembresia[]>>('/Membresias/socios');
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener los socios matriculados.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al obtener los socios matriculados.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async registrarSocioConMembresia(socio: RegistrarSocioRequest): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Membresias/socios/registrar', socio);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al registrar el socio con su membresía.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al registrar el socio con su membresía.';
+      throw new Error(errMsg);
+    }
+  }
 };

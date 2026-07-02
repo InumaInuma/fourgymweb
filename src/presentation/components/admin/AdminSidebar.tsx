@@ -3,8 +3,8 @@ import type { User } from '../../../domain/entities';
 
 interface AdminSidebarProps {
   user: User;
-  activeTab: 'schedule' | 'attendance';
-  setActiveTab: (tab: 'schedule' | 'attendance') => void;
+  activeTab: 'schedule' | 'attendance' | 'memberships';
+  setActiveTab: (tab: 'schedule' | 'attendance' | 'memberships') => void;
   onLogout: () => void;
 }
 
@@ -136,6 +136,40 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             {isCollapsed && (
               <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
                 Validar Asistencia
+              </div>
+            )}
+          </button>
+
+          {/* Membresías y Matrículas Button */}
+          <button
+            onClick={() => setActiveTab('memberships')}
+            className={`w-full flex items-center rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer relative group ${
+              isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'
+            } ${
+              activeTab === 'memberships'
+                ? 'bg-[#00b894] text-white shadow-lg shadow-[#00b894]/25 font-black'
+                : 'text-slate-300 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <svg
+              className="w-5 h-5 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm-1.2 6.4h-2.4c-.645 0-1.166-.512-1.166-1.13 0-.485.258-.93.674-1.185.376-.232.899-.385 1.492-.385.593 0 1.116.153 1.492.385.416.255.674.7.674 1.185 0 .618-.521 1.13-1.166 1.13z" />
+            </svg>
+            <span
+              className={`transition-opacity duration-200 ${
+                isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+              }`}
+            >
+              Membresías y Matrículas
+            </span>
+            {isCollapsed && (
+              <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
+                Membresías y Matrículas
               </div>
             )}
           </button>

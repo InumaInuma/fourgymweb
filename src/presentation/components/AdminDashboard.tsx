@@ -11,6 +11,7 @@ import { AttendanceSeatMap } from './admin/AttendanceSeatMap';
 import { SeatDetailsPanel } from './admin/SeatDetailsPanel';
 import { AdminSidebar } from './admin/AdminSidebar';
 import { AttendanceClassSelector } from './admin/AttendanceClassSelector';
+import { MembershipsPanel } from './admin/MembershipsPanel';
 
 interface BulkSlot {
   id: string;
@@ -39,8 +40,8 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
-  // Tabs: 'schedule' (programar clases) | 'attendance' (asistencia)
-  const [activeTab, setActiveTab] = useState<'schedule' | 'attendance'>('schedule');
+  // Tabs: 'schedule' (programar clases) | 'attendance' (asistencia) | 'memberships'
+  const [activeTab, setActiveTab] = useState<'schedule' | 'attendance' | 'memberships'>('schedule');
 
   // Classes list loaded from backend API
   const [classes, setClasses] = useState<GymClass[]>([]);
@@ -721,6 +722,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
               </div>
 
             </div>
+          )}
+
+          {/* Tab 3: Memberships Panel */}
+          {activeTab === 'memberships' && (
+            <MembershipsPanel currentUser={user} />
           )}
         </div>
       </div>
