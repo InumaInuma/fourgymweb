@@ -63,8 +63,8 @@ export const parseTimeToDateTime = (timeStr: string, dateStr?: string): { inicio
 };
 
 const mapDtoToUser = (data: any): User => {
-  let role: 'admin' | 'member' | 'trainer' | 'nutritionist' | 'instructor' = 'member';
-  let subscriptionType = data.tipoSuscripcion || 'Premium';
+  let role: 'admin' | 'member' | 'trainer' | 'nutritionist' | 'instructor' | 'receptionist' = 'member';
+  let subscriptionType = data.estado || 'Premium';
   
   if (data.idRol === 1) {
     role = 'admin';
@@ -80,6 +80,9 @@ const mapDtoToUser = (data: any): User => {
   } else if (data.idRol === 5) {
     role = 'nutritionist';
     subscriptionType = 'Nutricionista Staff';
+  } else if (data.idRol === 6) {
+    role = 'receptionist';
+    subscriptionType = 'Reception Staff';
   }
 
   return {
@@ -109,15 +112,67 @@ export interface SocioConMembresia {
   apellidoMaterno: string;
   numeroDocumento: string;
   telefono?: string;
+  correo?: string;
   fechaNacimiento?: string;
   edad?: number;
-  tipoSuscripcion: string;
-  estadoSuscripcion: string;
+  estadoSocio: string;
+  idContrato?: number;
+  estadoContrato?: string;
+  formaPago?: string;
+  montoPagado?: number;
   fechaInicioMembresia?: string;
   fechaFinMembresia?: string;
-  precioPagado?: number;
+  estadoMembresia?: string;
   nombrePlan?: string;
   duracionMeses?: number;
+}
+
+export interface Colaborador {
+  idUsuario: number;
+  idPersona: number;
+  idTenant: number;
+  idSucursal?: number;
+  nombreSucursal?: string;
+  nombre: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  numeroDocumento: string;
+  telefono?: string;
+  correo?: string;
+  idRol: number;
+  nombreRol: string;
+  activo: boolean;
+}
+
+export interface RegistrarColaboradorRequest {
+  idSucursal?: number;
+  nombre: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  numeroDocumento: string;
+  idTipoDocumento: number;
+  telefono?: string;
+  correo?: string;
+  idRol: number;
+}
+
+export interface ActualizarColaboradorRequest {
+  idSucursal?: number;
+  nombre: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  telefono?: string;
+  correo?: string;
+  idRol: number;
+  activo: boolean;
+}
+
+export interface Sucursal {
+  id: number;
+  idTenant: number;
+  nombre: string;
+  direccion?: string;
+  telefono?: string;
 }
 
 export interface RegistrarSocioRequest {
@@ -708,6 +763,71 @@ export const apiService = {
       return res.data;
     } catch (err: any) {
       const errMsg = err.response?.data?.message || err.message || 'Error al registrar el socio con su membresía.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async getColaboradores(): Promise<Colaborador[]> {
+    try {
+      const res = await api.get<ApiResponse<Colaborador[]>>('/Colaboradores');
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener la lista de colaboradores.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al obtener la lista de colaboradores.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async registrarColaborador(colaborador: RegistrarColaboradorRequest): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Colaboradores/registrar', colaborador);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al registrar el colaborador.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al registrar el colaborador.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async actualizarColaborador(id: number, colaborador: ActualizarColaboradorRequest): Promise<boolean> {
+    try {
+      const res = await api.put<ApiResponse<boolean>>(`/Colaboradores/${id}`, colaborador);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al actualizar el colaborador.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al actualizar el colaborador.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async eliminarColaborador(id: number): Promise<boolean> {
+    try {
+      const res = await api.delete<ApiResponse<boolean>>(`/Colaboradores/${id}`);
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al eliminar el colaborador.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al eliminar el colaborador.';
+      throw new Error(errMsg);
+    }
+  },
+
+  async getSucursales(): Promise<Sucursal[]> {
+    try {
+      const res = await api.get<ApiResponse<Sucursal[]>>('/Sucursales');
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener la lista de sucursales.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al obtener la lista de sucursales.';
       throw new Error(errMsg);
     }
   }

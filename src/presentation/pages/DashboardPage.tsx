@@ -266,7 +266,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
     );
   };
 
-  if (user.role === 'admin') {
+  if (user.role === 'admin' || user.role === 'receptionist') {
     return <AdminDashboard user={user} onLogout={onLogout} />;
   }
 

@@ -12,6 +12,7 @@ import { SeatDetailsPanel } from './admin/SeatDetailsPanel';
 import { AdminSidebar } from './admin/AdminSidebar';
 import { AttendanceClassSelector } from './admin/AttendanceClassSelector';
 import { MembershipsPanel } from './admin/MembershipsPanel';
+import { CollaboratorsPanel } from './admin/collaborators/CollaboratorsPanel';
 
 interface BulkSlot {
   id: string;
@@ -40,8 +41,8 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
-  // Tabs: 'schedule' (programar clases) | 'attendance' (asistencia) | 'memberships'
-  const [activeTab, setActiveTab] = useState<'schedule' | 'attendance' | 'memberships'>('schedule');
+  // Tabs: 'schedule' (programar clases) | 'attendance' (asistencia) | 'memberships' | 'collaborators'
+  const [activeTab, setActiveTab] = useState<'schedule' | 'attendance' | 'memberships' | 'collaborators'>('schedule');
 
   // Classes list loaded from backend API
   const [classes, setClasses] = useState<GymClass[]>([]);
@@ -529,10 +530,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
         <section className="glass-panel rounded-3xl p-6 md:p-8 border border-white/5 relative overflow-hidden mb-6 shrink-0">
           <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-brand-green/10 to-transparent pointer-events-none"></div>
           <span className="text-xs font-bold text-brand-green uppercase tracking-widest bg-brand-green/10 px-3 py-1 rounded-full">
-            Panel Administrativo
+            {user.role === 'receptionist' ? 'Panel de Recepción' : 'Panel Administrativo'}
           </span>
           <h1 className="text-2xl md:text-3xl font-black text-white mt-3 leading-tight tracking-tight">
-            Consola de Control • {user.name} 👑
+            {user.role === 'receptionist' ? 'Consola de Recepción' : 'Consola de Control'} • {user.name} {user.role !== 'receptionist' && '👑'}
           </h1>
           <p className="text-sm text-text-secondary mt-1">
             Programa horarios de clases de baile, gestiona instructores y audita la asistencia de los socios en tiempo real.
@@ -727,6 +728,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
           {/* Tab 3: Memberships Panel */}
           {activeTab === 'memberships' && (
             <MembershipsPanel currentUser={user} />
+          )}
+
+          {/* Tab 4: Collaborators Panel */}
+          {activeTab === 'collaborators' && user.role !== 'receptionist' && (
+            <CollaboratorsPanel />
           )}
         </div>
       </div>

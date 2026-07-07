@@ -3,8 +3,8 @@ import type { User } from '../../../domain/entities';
 
 interface AdminSidebarProps {
   user: User;
-  activeTab: 'schedule' | 'attendance' | 'memberships';
-  setActiveTab: (tab: 'schedule' | 'attendance' | 'memberships') => void;
+  activeTab: 'schedule' | 'attendance' | 'memberships' | 'collaborators';
+  setActiveTab: (tab: 'schedule' | 'attendance' | 'memberships' | 'collaborators') => void;
   onLogout: () => void;
 }
 
@@ -173,6 +173,42 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               </div>
             )}
           </button>
+
+          {/* Colaboradores / Staff Button */}
+          {user.role !== 'receptionist' && (
+            <button
+              onClick={() => setActiveTab('collaborators')}
+              className={`w-full flex items-center rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer relative group ${
+                isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'
+              } ${
+                activeTab === 'collaborators'
+                  ? 'bg-[#00b894] text-white shadow-lg shadow-[#00b894]/25 font-black'
+                  : 'text-slate-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <svg
+                className="w-5 h-5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0110.052 20M14.214 16.055a9.388 9.388 0 00-4.162.945M14.214 16.055c.085-.333.129-.682.129-1.04 0-2.072-1.398-3.818-3.32-4.341M10.052 20a11.382 11.382 0 01-5.011-1.228 4.128 4.128 0 017.532-2.492M10.052 20V19.9" />
+              </svg>
+              <span
+                className={`transition-opacity duration-200 ${
+                  isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+                }`}
+              >
+                Colaboradores
+              </span>
+              {isCollapsed && (
+                <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
+                  Colaboradores
+                </div>
+              )}
+            </button>
+          )}
         </nav>
       </div>
 

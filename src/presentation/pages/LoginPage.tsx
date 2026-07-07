@@ -42,6 +42,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         return 'Entrenador (Trainer)';
       case 5:
         return 'Nutricionista';
+      case 6:
+        return 'Recepcionista';
       default:
         return `Rol ${roleId}`;
     }
@@ -59,6 +61,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/25';
       case 5:
         return 'bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/25';
+      case 6:
+        return 'bg-violet-500/10 text-violet-400 border border-violet-500/25';
       default:
         return 'bg-slate-500/10 text-slate-400 border border-slate-500/25';
     }
