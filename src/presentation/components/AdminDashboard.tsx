@@ -13,6 +13,7 @@ import { AdminSidebar } from './admin/AdminSidebar';
 import { AttendanceClassSelector } from './admin/AttendanceClassSelector';
 import { MembershipsPanel } from './admin/MembershipsPanel';
 import { CollaboratorsPanel } from './admin/collaborators/CollaboratorsPanel';
+import { HomePanel } from './admin/HomePanel';
 
 interface BulkSlot {
   id: string;
@@ -41,8 +42,8 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
-  // Tabs: 'schedule' (programar clases) | 'attendance' (asistencia) | 'memberships' | 'collaborators'
-  const [activeTab, setActiveTab] = useState<'schedule' | 'attendance' | 'memberships' | 'collaborators'>('schedule');
+  // Tabs: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators'
+  const [activeTab, setActiveTab] = useState<'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators'>('home');
 
   // Classes list loaded from backend API
   const [classes, setClasses] = useState<GymClass[]>([]);
@@ -106,7 +107,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
 
   // Paging and filter states
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize] = useState(10);
   const [filterStartDate, setFilterStartDate] = useState(() => getLocalDateString());
   const [filterEndDate, setFilterEndDate] = useState(() => getLocalDateString());
   const [totalClassesCount, setTotalClassesCount] = useState(0);
@@ -527,53 +528,62 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
       <div className="flex-grow flex flex-col p-6 md:p-8 overflow-y-auto max-h-screen w-full relative z-10">
         
         {/* Page title / Welcome Banner */}
-        <section className="glass-panel rounded-3xl p-6 md:p-8 border border-white/5 relative overflow-hidden mb-6 shrink-0">
-          <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-brand-green/10 to-transparent pointer-events-none"></div>
-          <span className="text-xs font-bold text-brand-green uppercase tracking-widest bg-brand-green/10 px-3 py-1 rounded-full">
-            {user.role === 'receptionist' ? 'Panel de Recepción' : 'Panel Administrativo'}
-          </span>
-          <h1 className="text-2xl md:text-3xl font-black text-white mt-3 leading-tight tracking-tight">
-            {user.role === 'receptionist' ? 'Consola de Recepción' : 'Consola de Control'} • {user.name} {user.role !== 'receptionist' && '👑'}
-          </h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Programa horarios de clases de baile, gestiona instructores y audita la asistencia de los socios en tiempo real.
-          </p>
-        </section>
+        {activeTab !== 'home' && (
+          <section className="glass-panel rounded-3xl p-6 md:p-8 border border-white/5 relative overflow-hidden mb-6 shrink-0">
+            <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-brand-green/10 to-transparent pointer-events-none"></div>
+            <span className="text-xs font-bold text-brand-green uppercase tracking-widest bg-brand-green/10 px-3 py-1 rounded-full">
+              {user.role === 'receptionist' ? 'Panel de Recepción' : 'Panel Administrativo'}
+            </span>
+            <h1 className="text-2xl md:text-3xl font-black text-white mt-3 leading-tight tracking-tight">
+              {user.role === 'receptionist' ? 'Consola de Recepción' : 'Consola de Control'} • {user.name} {user.role !== 'receptionist' && '👑'}
+            </h1>
+            <p className="text-sm text-text-secondary mt-1">
+              Programa horarios de clases de baile, gestiona instructores y audita la asistencia de los socios en tiempo real.
+            </p>
+          </section>
+        )}
 
         {/* Stats summary row at top of main content */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6 shrink-0">
-          <div className="glass-card bg-[#263238]/40 border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">Clases Hoy</span>
-            <div className="flex items-baseline space-x-2 mt-2">
-              <span className="text-2xl md:text-3xl font-black text-brand-green">{classes.length}</span>
-              <span className="text-xs text-text-secondary">activas</span>
+        {activeTab !== 'home' && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6 shrink-0">
+            <div className="glass-card bg-[#263238]/40 border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">Clases Hoy</span>
+              <div className="flex items-baseline space-x-2 mt-2">
+                <span className="text-2xl md:text-3xl font-black text-brand-green">{classes.length}</span>
+                <span className="text-xs text-text-secondary">activas</span>
+              </div>
             </div>
-          </div>
-          
-          <div className="glass-card bg-[#263238]/40 border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">Total Reservas</span>
-            <div className="flex items-baseline space-x-2 mt-2">
-              <span className="text-2xl md:text-3xl font-black text-accent-cyan">{reservations.length}</span>
-              <span className="text-xs text-text-secondary">asientos reservados</span>
+            
+            <div className="glass-card bg-[#263238]/40 border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">Total Reservas</span>
+              <div className="flex items-baseline space-x-2 mt-2">
+                <span className="text-2xl md:text-3xl font-black text-accent-cyan">{reservations.length}</span>
+                <span className="text-xs text-text-secondary">asientos reservados</span>
+              </div>
             </div>
-          </div>
 
-          <div className="glass-card bg-[#263238]/40 border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
-            <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">Asistencia</span>
-            <div className="flex items-baseline space-x-2 mt-2">
-              <span className="text-2xl md:text-3xl font-black text-emerald-400">
-                {reservations.length > 0
-                  ? Math.round((reservations.filter((r) => r.attended).length / reservations.length) * 100)
-                  : 0}
-                %
-              </span>
-              <span className="text-xs text-text-secondary">check-ins</span>
+            <div className="glass-card bg-[#263238]/40 border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
+              <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest">Asistencia</span>
+              <div className="flex items-baseline space-x-2 mt-2">
+                <span className="text-2xl md:text-3xl font-black text-emerald-400">
+                  {reservations.length > 0
+                    ? Math.round((reservations.filter((r) => r.attended).length / reservations.length) * 100)
+                    : 0}
+                  %
+                </span>
+                <span className="text-xs text-text-secondary">check-ins</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Main interactive area: Form/Table or Attendance Map */}
         <div className="flex-grow">
+          {/* Tab 0: Home / Inicio Panel */}
+          {activeTab === 'home' && (
+            <HomePanel user={user} setActiveTab={setActiveTab} />
+          )}
+
           {/* Tab 1: Class Scheduler */}
           {activeTab === 'schedule' && (
             <div className="space-y-6">

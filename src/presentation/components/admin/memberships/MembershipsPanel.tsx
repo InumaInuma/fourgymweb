@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { apiService, type PlanMembresia, type SocioConMembresia } from '../../../../data/apiService';
+import { apiService, type PlanMembresia, type SocioConMembresia, type MembresiasPorVencer } from '../../../../data/apiService';
 import { SocioMatriculaModal } from './SocioMatriculaModal';
+import { SocioDetailCard } from './SocioDetailCard';
 import { Toast } from '../../ui/Toast';
 
 interface MembershipsPanelProps {
   currentUser: any;
 }
 
-export const MembershipsPanel: React.FC<MembershipsPanelProps> = ({ currentUser }) => {
+export const MembershipsPanel: React.FC<MembershipsPanelProps> = ({ currentUser: _currentUser }) => {
   // Tabs: 'socios' | 'planes'
   const [subTab, setSubTab] = useState<'socios' | 'planes'>('socios');
 
@@ -19,6 +20,13 @@ export const MembershipsPanel: React.FC<MembershipsPanelProps> = ({ currentUser 
 
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
+
+  // 360° Socio Detail Card
+  const [selectedSocio, setSelectedSocio] = useState<SocioConMembresia | null>(null);
+
+  // Membresías por vencer
+  const [membresiasPorVencer, setMembresiasPorVencer] = useState<MembresiasPorVencer>({ vencenHoy: 0, vencenManana: 0, vencenEstaSemana: 0 });
+  const [loadingVencer, setLoadingVencer] = useState(true);
 
   // Drawer/Modal states
   const [isSocioDrawerOpen, setIsSocioDrawerOpen] = useState(false);
@@ -65,6 +73,10 @@ export const MembershipsPanel: React.FC<MembershipsPanelProps> = ({ currentUser 
   useEffect(() => {
     loadPlanes();
     loadSocios();
+    apiService.getMembresiasPorVencer()
+      .then(data => setMembresiasPorVencer(data))
+      .catch(() => {})
+      .finally(() => setLoadingVencer(false));
   }, []);
 
   // Filtered members list
@@ -209,6 +221,39 @@ export const MembershipsPanel: React.FC<MembershipsPanelProps> = ({ currentUser 
       {/* SUBTAB 1: SOCIOS MATRICULADOS */}
       {subTab === 'socios' && (
         <div className="space-y-4">
+          {/* Alertas de por vencer */}
+          {!loadingVencer && (membresiasPorVencer.vencenHoy > 0 || membresiasPorVencer.vencenManana > 0 || membresiasPorVencer.vencenEstaSemana > 0) && (
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {membresiasPorVencer.vencenHoy > 0 && (
+                <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '10px', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '18px' }}>🚨</span>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: '800', color: '#ef4444', fontSize: '13px' }}>{membresiasPorVencer.vencenHoy} membresía(s) vencen HOY</p>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af' }}>Renovar de inmediato</p>
+                  </div>
+                </div>
+              )}
+              {membresiasPorVencer.vencenManana > 0 && (
+                <div style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)', borderRadius: '10px', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '18px' }}>⚠️</span>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: '800', color: '#f97316', fontSize: '13px' }}>{membresiasPorVencer.vencenManana} membresía(s) vencen MAÑANA</p>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af' }}>Contactar al socio hoy</p>
+                  </div>
+                </div>
+              )}
+              {membresiasPorVencer.vencenEstaSemana > 0 && (
+                <div style={{ background: 'rgba(250,204,21,0.08)', border: '1px solid rgba(250,204,21,0.25)', borderRadius: '10px', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '18px' }}>📅</span>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: '800', color: '#facc15', fontSize: '13px' }}>{membresiasPorVencer.vencenEstaSemana} membresía(s) vencen esta semana</p>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af' }}>Prontos a vencer</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Controls row */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Search Input */}
@@ -278,7 +323,9 @@ export const MembershipsPanel: React.FC<MembershipsPanelProps> = ({ currentUser 
                       return (
                         <tr
                           key={socio.idSocio}
-                          className="hover:bg-white/5 transition-colors group"
+                          className="hover:bg-white/5 transition-colors group cursor-pointer"
+                          onClick={() => setSelectedSocio(socio)}
+                          title="Clic para ver ficha completa"
                         >
                           <td className="px-6 py-4">
                             <div className="flex flex-col">
@@ -374,7 +421,7 @@ export const MembershipsPanel: React.FC<MembershipsPanelProps> = ({ currentUser 
                 <div
                   key={plan.id}
                   onClick={() => openEditPlanModal(plan)}
-                  className={`group bg-white/5 border hover:border-accent-cyan/40 hover:bg-white/10 hover:scale-[1.02] transition-all duration-300 rounded-3xl p-5 flex flex-col justify-between h-56 cursor-pointer relative overflow-hidden ${
+                  className={`group bg-white/5 border hover:border-accent-cyan/40 hover:bg-white/10 hover:scale-[1.02] transition-all duration-300 rounded-3xl p-5 flex flex-col justify-between h-60 cursor-pointer relative overflow-hidden ${
                     plan.activo ? 'border-white/10' : 'border-rose-500/20 opacity-60'
                   }`}
                 >
@@ -401,9 +448,9 @@ export const MembershipsPanel: React.FC<MembershipsPanelProps> = ({ currentUser 
                       <p className="text-xs text-text-secondary mt-1">Duración: {plan.duracionMeses} {plan.duracionMeses === 1 ? 'mes completo' : 'meses completos'}</p>
                     </div>
 
-                    <div className="border-t border-white/5 pt-4 mt-4 flex items-baseline justify-between">
-                      <span className="text-xs text-text-secondary font-bold uppercase">Precio</span>
-                      <span className="text-2xl font-black text-white font-mono tracking-tight">
+                    <div className="border-t border-white/5 pt-3.5 mt-auto flex items-center justify-between">
+                      <span className="text-[10px] text-text-secondary font-black uppercase tracking-wider">Precio</span>
+                      <span className="text-2xl font-black text-white font-mono tracking-tight whitespace-nowrap">
                         S/ {plan.precio.toFixed(2)}
                       </span>
                     </div>
@@ -544,6 +591,16 @@ export const MembershipsPanel: React.FC<MembershipsPanelProps> = ({ currentUser 
         mensaje={toast}
         onClose={() => setToast(null)}
       />
+
+      {/* 360° Socio Detail Card Modal */}
+      {selectedSocio && (
+        <SocioDetailCard
+          socio={selectedSocio}
+          planes={planes.map(p => ({ id: p.id, nombre: p.nombre, precio: p.precio, duracionMeses: p.duracionMeses }))}
+          onClose={() => setSelectedSocio(null)}
+          onRefresh={() => { setSelectedSocio(null); loadSocios(); }}
+        />
+      )}
     </div>
   );
 };

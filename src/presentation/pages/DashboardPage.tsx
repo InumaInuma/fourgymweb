@@ -11,6 +11,10 @@ import { MemberBottomBar } from '../components/member/MemberBottomBar';
 import { MemberBookings } from '../components/member/MemberBookings';
 import { MemberNotifications } from '../components/member/MemberNotifications';
 import { ClassCarousel } from '../components/ClassCarousel';
+import { MemberSubscription } from '../components/member/MemberSubscription';
+import { MemberRoutine } from '../components/member/MemberRoutine';
+import { MemberNutrition } from '../components/member/MemberNutrition';
+import { MemberAppointments } from '../components/member/MemberAppointments';
 
 interface DashboardPageProps {
   user: User;
@@ -24,8 +28,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
   const [seats, setSeats] = useState<ClassSpot[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
 
-  // Tabs navigation state for members: 'home' | 'classes' | 'bookings' | 'notifications'
-  const [activeTab, setActiveTab] = useState<'home' | 'classes' | 'bookings' | 'notifications'>('home');
+  // Tabs navigation state for members: 'home' | 'classes' | 'bookings' | 'notifications' | 'subscription' | 'routine' | 'nutrition' | 'appointments'
+  const [activeTab, setActiveTab] = useState<'home' | 'classes' | 'bookings' | 'notifications' | 'subscription' | 'routine' | 'nutrition' | 'appointments'>('home');
 
   // Toggle state for MemberSidebar on mobile screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -186,7 +190,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
   };
 
   // Resets selected class when selecting tabs to ensure user lands back on classes list
-  const handleTabChange = (tab: 'home' | 'classes' | 'bookings' | 'notifications') => {
+  const handleTabChange = (tab: 'home' | 'classes' | 'bookings' | 'notifications' | 'subscription' | 'routine' | 'nutrition' | 'appointments') => {
     setActiveTab(tab);
     if (tab === 'classes' || tab === 'home') {
       setSelectedClass(null);
@@ -479,6 +483,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
               notifications={notifications} 
               onMarkAsRead={handleMarkNotificationAsRead}
             />
+          </div>
+        )}
+
+        {/* Tab 4: Mi Suscripción e Ingresos */}
+        {activeTab === 'subscription' && (
+          <div className="space-y-6">
+            <MemberSubscription idSocio={user.idSocio || parseInt(user.id, 10)} />
+          </div>
+        )}
+
+        {/* Tab 5: Mi Entrenamiento */}
+        {activeTab === 'routine' && (
+          <div className="space-y-6">
+            <MemberRoutine idSocio={user.idSocio || parseInt(user.id, 10)} />
+          </div>
+        )}
+
+        {/* Tab 6: Mi Nutrición */}
+        {activeTab === 'nutrition' && (
+          <div className="space-y-6">
+            <MemberNutrition idSocio={user.idSocio || parseInt(user.id, 10)} />
+          </div>
+        )}
+
+        {/* Tab 7: Mis Citas */}
+        {activeTab === 'appointments' && (
+          <div className="space-y-6">
+            <MemberAppointments idSocio={user.idSocio || parseInt(user.id, 10)} />
           </div>
         )}
 

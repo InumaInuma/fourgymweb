@@ -104,6 +104,11 @@ export interface PlanMembresia {
   activo: boolean;
 }
 
+export interface FormaPago {
+  id: number;
+  nombre: string;
+}
+
 export interface SocioConMembresia {
   idSocio: number;
   idPersona: number;
@@ -167,6 +172,80 @@ export interface ActualizarColaboradorRequest {
   activo: boolean;
 }
 
+export interface Asistencia {
+  id: number;
+  idSocio: number;
+  idSucursal: number;
+  nombreSucursal: string;
+  fechaHora: string;
+  metodoIngreso: string;
+}
+
+export interface Cita {
+  id: number;
+  idSocio: number;
+  idEspecialista: number;
+  nombreEspecialista: string;
+  fechaHora: string;
+  tipoCita: 'Nutricion' | 'Entrenamiento';
+  estado: 'Programada' | 'Realizada' | 'Cancelada';
+  notas?: string;
+}
+
+export interface PlanAlimentario {
+  id: number;
+  idSocio: number;
+  idNutricionista: number;
+  fechaAsignacion: string;
+  caloriasObjetivo: number;
+  porcentajeProteina: number;
+  porcentajeCarbohidratos: number;
+  porcentajeGrasa: number;
+  desayuno: string;
+  colacion1?: string;
+  almuerzo: string;
+  merienda?: string;
+  cena: string;
+  usuarioModificacion?: string;
+}
+
+export interface EvaluacionAntropometrica {
+  id: number;
+  idSocio: number;
+  idNutricionista: number;
+  fechaEvaluacion: string;
+  peso: number;
+  porcentajeGrasa: number;
+  porcentajeMusculo: number;
+  grasaVisceral?: number;
+  edadMetabolica?: number;
+  usuarioModificacion?: string;
+}
+
+export interface RutinaEjercicio {
+  id: number;
+  idRutina: number;
+  idEjercicio: number;
+  nombreEjercicio: string;
+  grupoMuscular: string;
+  series: number;
+  repeticiones: string;
+  pesoAsignado?: string;
+  rpeObjetivo?: number;
+  diaSemana: number;
+}
+
+export interface Rutina {
+  id: number;
+  idSocio: number;
+  idEntrenador: number;
+  nombreRutina: string;
+  objetivo?: string;
+  fechaAsignacion: string;
+  activa: boolean;
+  ejercicios: RutinaEjercicio[];
+}
+
 export interface Sucursal {
   id: number;
   idTenant: number;
@@ -185,9 +264,94 @@ export interface RegistrarSocioRequest {
   fechaNacimiento: string;
   idPlanMembresia: number;
   precioPagado: number;
+  idFormaPago: number;
+}
+
+export interface RenovarMembresiaRequest {
+  idSocio: number;
+  idPlanMembresia: number;
+  precioOriginal: number;
+  precioPagado: number;
+  porcentajeDescuento: number;
+  descuentoAutorizadoPor?: string;
+  idFormaPago: number;
+}
+
+export interface CongelarMembresiaRequest {
+  idSocio: number;
+  fechaInicio: string;
+  fechaFin: string;
+  motivo: string;
+  autorizadoPor: string;
+}
+
+export interface CambiarPlanRequest {
+  idSocio: number;
+  idPlanMembresia: number;
+  precioOriginal: number;
+  precioPagado: number;
+  porcentajeDescuento: number;
+  descuentoAutorizadoPor?: string;
+  idFormaPago: number;
+}
+
+export interface SocioHistorialFinanciero {
+  idContrato: number;
+  nombrePlan: string;
+  precioOriginal: number;
+  montoPagado: number;
+  porcentajeDescuento: number;
+  descuentoAutorizadoPor?: string;
+  formaPago: string;
+  fechaVenta: string;
+  nombreVendedor: string;
+  anio: number;
+}
+
+export interface MembresiasPorVencer {
+  vencenHoy: number;
+  vencenManana: number;
+  vencenEstaSemana: number;
+}
+
+export interface CajaSesionActiva {
+  id: number;
+  idTenant: number;
+  idSucursal: number;
+  idUsuario: number;
+  fechaApertura: string;
+  montoApertura: number;
+  estado: string;
+  comentario?: string;
+}
+
+export interface CajaBalance {
+  montoApertura: number;
+  membresiasEfectivo: number;
+  membresiasYape: number;
+  membresiasPlin: number;
+  membresiasTransferencia: number;
+  membresiasTarjeta: number;
+  membresiasMixto: number;
+  barFitEfectivo: number;
+  barFitYape: number;
+  barFitPlin: number;
+  barFitTransferencia: number;
+  barFitTarjeta: number;
+  barFitMixto: number;
+  ingresosManuales: number;
+  egresosManuales: number;
+  totalEfectivo: number;
+  totalYape: number;
+  totalPlin: number;
+  totalTransferencia: number;
+  totalTarjeta: number;
+  totalMixto: number;
+  totalTeorico: number;
 }
 
 export const apiService = {
+
   async login(email: string): Promise<User> {
     try {
       const res = await api.post<ApiResponse<any>>('/Auth/login', { email });
@@ -754,6 +918,19 @@ export const apiService = {
     }
   },
 
+  async getFormasPago(): Promise<FormaPago[]> {
+    try {
+      const res = await api.get<ApiResponse<FormaPago[]>>('/Membresias/formas-pago');
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener las formas de pago.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al obtener las formas de pago.';
+      throw new Error(errMsg);
+    }
+  },
+
   async registrarSocioConMembresia(socio: RegistrarSocioRequest): Promise<boolean> {
     try {
       const res = await api.post<ApiResponse<boolean>>('/Membresias/socios/registrar', socio);
@@ -830,5 +1007,222 @@ export const apiService = {
       const errMsg = err.response?.data?.message || err.message || 'Error al obtener la lista de sucursales.';
       throw new Error(errMsg);
     }
-  }
+  },
+
+  // ─── MEMBRESÍAS: Operaciones Avanzadas ──────────────────────────────────
+
+  async renovarMembresia(req: RenovarMembresiaRequest): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Membresias/socios/renovar', req);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al renovar la membresía.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al renovar la membresía.');
+    }
+  },
+
+  async congelarMembresia(req: CongelarMembresiaRequest): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Membresias/socios/congelar', req);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al congelar la membresía.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al congelar la membresía.');
+    }
+  },
+
+  async descongelarMembresia(idSocio: number): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>(`/Membresias/socios/descongelar/${idSocio}`, {});
+      if (!res.isSuccess) throw new Error(res.message || 'Error al descongelar la membresía.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al descongelar la membresía.');
+    }
+  },
+
+  async cambiarPlan(req: CambiarPlanRequest): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Membresias/socios/cambiar-plan', req);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al cambiar el plan.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al cambiar el plan.');
+    }
+  },
+
+  async transferirMembresia(idSocioOrigen: number, idSocioDestino: number): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Membresias/socios/transferir', { idSocioOrigen, idSocioDestino });
+      if (!res.isSuccess) throw new Error(res.message || 'Error al transferir la membresía.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al transferir la membresía.');
+    }
+  },
+
+  async cancelarMembresia(idSocio: number, motivo: string): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Membresias/socios/cancelar', { idSocio, motivo });
+      if (!res.isSuccess) throw new Error(res.message || 'Error al cancelar la membresía.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al cancelar la membresía.');
+    }
+  },
+
+  async getHistorialFinanciero(idSocio: number): Promise<SocioHistorialFinanciero[]> {
+    try {
+      const res = await api.get<ApiResponse<SocioHistorialFinanciero[]>>(`/Membresias/socios/${idSocio}/historial-financiero`);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener el historial financiero.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener el historial financiero.');
+    }
+  },
+
+  async getMembresiasPorVencer(): Promise<MembresiasPorVencer> {
+    try {
+      const res = await api.get<ApiResponse<MembresiasPorVencer>>('/Membresias/socios/por-vencer');
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener membresías por vencer.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener membresías por vencer.');
+    }
+  },
+
+  // ─── CAJA: Control de Turnos ────────────────────────────────────────────
+
+  async getCajaSesionActiva(): Promise<CajaSesionActiva | null> {
+    try {
+      const res = await api.get<ApiResponse<CajaSesionActiva | null>>('/Caja/sesion-activa');
+      if (!res.isSuccess) throw new Error(res.message || 'Error al consultar sesión de caja.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al consultar sesión de caja.');
+    }
+  },
+
+  async abrirCaja(montoApertura: number, comentario?: string): Promise<number> {
+    try {
+      const res = await api.post<ApiResponse<number>>('/Caja/apertura', { montoApertura, comentario });
+      if (!res.isSuccess) throw new Error(res.message || 'Error al abrir la caja.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al abrir la caja.');
+    }
+  },
+
+  async getCajaBalance(idSesionCaja: number): Promise<CajaBalance> {
+    try {
+      const res = await api.get<ApiResponse<CajaBalance>>(`/Caja/balance/${idSesionCaja}`);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener el balance de caja.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener el balance de caja.');
+    }
+  },
+
+  async cerrarCaja(idSesionCaja: number, montoCierreReal: number, comentario?: string): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Caja/cierre', { idSesionCaja, montoCierreReal, comentario });
+      if (!res.isSuccess) throw new Error(res.message || 'Error al cerrar la caja.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al cerrar la caja.');
+    }
+  },
+
+  // ─── PORTAL DEL SOCIO ────────────────────────────────────────────────────
+
+  async getSocioStatusSuscripcion(idSocio: number): Promise<SocioConMembresia> {
+    try {
+      const res = await api.get<ApiResponse<SocioConMembresia>>(`/SocioPortal/${idSocio}/status-suscripcion`);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener estado de suscripción.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener estado de suscripción.');
+    }
+  },
+
+  async getSocioAsistencias(idSocio: number): Promise<Asistencia[]> {
+    try {
+      const res = await api.get<ApiResponse<Asistencia[]>>(`/SocioPortal/${idSocio}/asistencias`);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener asistencias.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener asistencias.');
+    }
+  },
+
+  async getEspecialistas(): Promise<Colaborador[]> {
+    try {
+      const res = await api.get<ApiResponse<Colaborador[]>>('/SocioPortal/especialistas');
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener especialistas.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener especialistas.');
+    }
+  },
+
+  async getSocioCitas(idSocio: number): Promise<Cita[]> {
+    try {
+      const res = await api.get<ApiResponse<Cita[]>>(`/SocioPortal/${idSocio}/citas`);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener citas.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener citas.');
+    }
+  },
+
+  async agendarCita(dto: { idSocio: number; idEspecialista: number; fechaHora: string; tipoCita: string; notas?: string }): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/SocioPortal/citas', dto);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al agendar cita.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al agendar cita.');
+    }
+  },
+
+  async cancelarCita(idCita: number): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>(`/SocioPortal/citas/cancelar/${idCita}`);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al cancelar cita.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al cancelar cita.');
+    }
+  },
+
+  async getSocioPlanAlimentario(idSocio: number): Promise<PlanAlimentario | null> {
+    try {
+      const res = await api.get<ApiResponse<PlanAlimentario | null>>(`/SocioPortal/${idSocio}/nutricion-plan`);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener plan alimentario.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener plan alimentario.');
+    }
+  },
+
+  async getSocioEvaluacionesAntropometricas(idSocio: number): Promise<EvaluacionAntropometrica[]> {
+    try {
+      const res = await api.get<ApiResponse<EvaluacionAntropometrica[]>>(`/SocioPortal/${idSocio}/nutricion-evaluaciones`);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener evaluaciones antropométricas.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener evaluaciones antropométricas.');
+    }
+  },
+
+  async getSocioRutinaActiva(idSocio: number): Promise<Rutina | null> {
+    try {
+      const res = await api.get<ApiResponse<Rutina | null>>(`/SocioPortal/${idSocio}/entrenamiento-rutinas`);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener rutina de entrenamiento.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener rutina de entrenamiento.');
+    }
+  },
 };
+

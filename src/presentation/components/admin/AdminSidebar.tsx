@@ -3,8 +3,8 @@ import type { User } from '../../../domain/entities';
 
 interface AdminSidebarProps {
   user: User;
-  activeTab: 'schedule' | 'attendance' | 'memberships' | 'collaborators';
-  setActiveTab: (tab: 'schedule' | 'attendance' | 'memberships' | 'collaborators') => void;
+  activeTab: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators';
+  setActiveTab: (tab: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators') => void;
   onLogout: () => void;
 }
 
@@ -69,6 +69,40 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
         {/* Navigation Menu */}
         <nav className="p-3 space-y-2 flex-grow mt-2">
+          {/* Inicio Button */}
+          <button
+            onClick={() => setActiveTab('home')}
+            className={`w-full flex items-center rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer relative group ${
+              isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'
+            } ${
+              activeTab === 'home'
+                ? 'bg-[#00b894] text-white shadow-lg shadow-[#00b894]/25 font-black'
+                : 'text-slate-300 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <svg
+              className="w-5 h-5 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+            </svg>
+            <span
+              className={`transition-opacity duration-200 ${
+                isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+              }`}
+            >
+              Inicio
+            </span>
+            {isCollapsed && (
+              <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
+                Inicio
+              </div>
+            )}
+          </button>
+
           {/* Programar Clases Button */}
           <button
             onClick={() => setActiveTab('schedule')}

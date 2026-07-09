@@ -4,8 +4,8 @@ import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 interface MemberSidebarProps {
   user: User;
-  activeTab: 'home' | 'classes' | 'bookings' | 'notifications';
-  setActiveTab: (tab: 'home' | 'classes' | 'bookings' | 'notifications') => void;
+  activeTab: 'home' | 'classes' | 'bookings' | 'notifications' | 'subscription' | 'routine' | 'nutrition' | 'appointments';
+  setActiveTab: (tab: 'home' | 'classes' | 'bookings' | 'notifications' | 'subscription' | 'routine' | 'nutrition' | 'appointments') => void;
   unreadNotificationsCount: number;
   onLogout: () => void;
   isOpen: boolean;
@@ -303,6 +303,155 @@ export const MemberSidebar: React.FC<MemberSidebarProps> = ({
               {isCollapsed && (
                 <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
                   Notificaciones
+                </div>
+              )}
+            </button>
+
+            {/* Mi Suscripción Button */}
+            <button
+              onClick={() => {
+                setActiveTab('subscription');
+                if (isOpen) onClose();
+              }}
+              className={`w-full flex items-center rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer relative group ${
+                isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'
+              } ${
+                activeTab === 'subscription'
+                  ? 'bg-[#00b894] text-white shadow-lg shadow-[#00b894]/25 font-black'
+                  : 'text-slate-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <svg
+                className="w-5 h-5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.599-3.75A11.952 11.952 0 0112 2.714z" />
+              </svg>
+              <span
+                className={`transition-opacity duration-200 ${
+                  isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+                }`}
+              >
+                Mi Plan
+              </span>
+              {isCollapsed && (
+                <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
+                  Mi Plan e Ingresos
+                </div>
+              )}
+            </button>
+
+            {/* Mi Rutina Button */}
+            <button
+              onClick={() => {
+                setActiveTab('routine');
+                if (isOpen) onClose();
+              }}
+              className={`w-full flex items-center rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer relative group ${
+                isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'
+              } ${
+                activeTab === 'routine'
+                  ? 'bg-[#00b894] text-white shadow-lg shadow-[#00b894]/25 font-black'
+                  : 'text-slate-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <svg
+                className="w-5 h-5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+              </svg>
+              <span
+                className={`transition-opacity duration-200 ${
+                  isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+                }`}
+              >
+                Mi Rutina
+              </span>
+              {isCollapsed && (
+                <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
+                  Mi Rutina Diaria
+                </div>
+              )}
+            </button>
+
+            {/* Mi Nutrición Button */}
+            <button
+              onClick={() => {
+                setActiveTab('nutrition');
+                if (isOpen) onClose();
+              }}
+              className={`w-full flex items-center rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer relative group ${
+                isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'
+              } ${
+                activeTab === 'nutrition'
+                  ? 'bg-[#00b894] text-white shadow-lg shadow-[#00b894]/25 font-black'
+                  : 'text-slate-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <svg
+                className="w-5 h-5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
+              </svg>
+              <span
+                className={`transition-opacity duration-200 ${
+                  isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+                }`}
+              >
+                Mi Nutrición
+              </span>
+              {isCollapsed && (
+                <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
+                  Progreso y Nutrición
+                </div>
+              )}
+            </button>
+
+            {/* Citas Button */}
+            <button
+              onClick={() => {
+                setActiveTab('appointments');
+                if (isOpen) onClose();
+              }}
+              className={`w-full flex items-center rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer relative group ${
+                isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'
+              } ${
+                activeTab === 'appointments'
+                  ? 'bg-[#00b894] text-white shadow-lg shadow-[#00b894]/25 font-black'
+                  : 'text-slate-300 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <svg
+                className="w-5 h-5 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
+              </svg>
+              <span
+                className={`transition-opacity duration-200 ${
+                  isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+                }`}
+              >
+                Citas
+              </span>
+              {isCollapsed && (
+                <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
+                  Mis Citas de Evaluación
                 </div>
               )}
             </button>

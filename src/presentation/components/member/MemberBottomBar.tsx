@@ -3,8 +3,8 @@ import type { User } from '../../../domain/entities';
 
 interface MemberBottomBarProps {
   user: User;
-  activeTab: 'home' | 'classes' | 'bookings' | 'notifications';
-  setActiveTab: (tab: 'home' | 'classes' | 'bookings' | 'notifications') => void;
+  activeTab: 'home' | 'classes' | 'bookings' | 'notifications' | 'subscription' | 'routine' | 'nutrition' | 'appointments';
+  setActiveTab: (tab: 'home' | 'classes' | 'bookings' | 'notifications' | 'subscription' | 'routine' | 'nutrition' | 'appointments') => void;
   unreadNotificationsCount: number;
   onMenuToggle: () => void;
 }

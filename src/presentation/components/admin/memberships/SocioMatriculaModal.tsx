@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import type { PlanMembresia } from '../../../../data/apiService';
+import type { PlanMembresia, FormaPago } from '../../../../data/apiService';
+import { apiService } from '../../../../data/apiService';
 
 interface SocioMatriculaModalProps {
   isOpen: boolean;
@@ -28,7 +29,23 @@ export const SocioMatriculaModal: React.FC<SocioMatriculaModalProps> = ({
   const [selectedPlanId, setSelectedPlanId] = useState<number | ''>('');
   const [precioPagado, setPrecioPagado] = useState<string>('');
   const [isCustomPrice, setIsCustomPrice] = useState(false);
+  const [formasPago, setFormasPago] = useState<FormaPago[]>([]);
+  const [selectedFormaPagoId, setSelectedFormaPagoId] = useState<number>(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Fetch Formas de Pago once
+  useEffect(() => {
+    if (isOpen) {
+      apiService.getFormasPago()
+        .then(data => {
+          setFormasPago(data);
+          if (data.length > 0) {
+            setSelectedFormaPagoId(data[0].id);
+          }
+        })
+        .catch(err => console.error('Error al cargar formas de pago', err));
+    }
+  }, [isOpen]);
 
   // Reset fields when opening modal
   useEffect(() => {
@@ -135,7 +152,8 @@ export const SocioMatriculaModal: React.FC<SocioMatriculaModalProps> = ({
       telefono: telefono.trim(),
       fechaNacimiento: fechaNacimiento,
       idPlanMembresia: selectedPlanId,
-      precioPagado: precio
+      precioPagado: precio,
+      idFormaPago: selectedFormaPagoId
     });
   };
 
@@ -330,6 +348,25 @@ export const SocioMatriculaModal: React.FC<SocioMatriculaModalProps> = ({
               ))}
             </select>
             {renderFieldError('selectedPlanId')}
+          </div>
+
+          {/* Forma de Pago */}
+          <div>
+            <label className="text-[10px] text-text-secondary font-bold uppercase tracking-wider block mb-1">
+              Forma de Pago *
+            </label>
+            <select
+              value={selectedFormaPagoId}
+              onChange={(e) => setSelectedFormaPagoId(parseInt(e.target.value, 10))}
+              disabled={formLoading}
+              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-brand-green transition-all appearance-none cursor-pointer"
+            >
+              {formasPago.map((fp) => (
+                <option key={fp.id} value={fp.id} className="bg-[#110f22]">
+                  {fp.nombre.toUpperCase()}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Resumen Financiero y Vigencia */}
