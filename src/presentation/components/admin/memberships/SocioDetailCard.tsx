@@ -86,15 +86,30 @@ export const SocioDetailCard: React.FC<SocioDetailCardProps> = ({ socio, planes,
   }, [activeTab]);
 
   // Auto-calcular precio con descuento
-  const precioConDescuento = precioOriginal * (1 - descuentoPct / 100);
+  const precioConDescuento = parseFloat((precioOriginal * (1 - descuentoPct / 100)).toFixed(2));
   useEffect(() => {
-    setPrecioPagado(parseFloat(precioConDescuento.toFixed(2)));
+    setPrecioPagado(precioConDescuento);
   }, [precioOriginal, descuentoPct]);
 
+  // Derivadas para adelanto
+  const isAdelanto = selectedPlanId > 0 && precioPagado > 0 && precioPagado < precioConDescuento;
+  const isExcedido = precioPagado > precioConDescuento;
+  const saldoPendiente = parseFloat((precioConDescuento - precioPagado).toFixed(2));
+  const fechaLimite15 = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 15);
+    return d.toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' });
+  })();
+
   const handleRenovar = async () => {
+    const plan = planes.find(p => p.id === selectedPlanId);
+    const precioAcordado = (plan?.precio ?? precioOriginal) * (1 - descuentoPct / 100);
+    if (precioPagado > precioAcordado) {
+      showToast('El monto a pagar no puede superar el precio final con descuento.', 'error');
+      return;
+    }
     setSubmitting(true);
     try {
-      const plan = planes.find(p => p.id === selectedPlanId);
       await apiService.renovarMembresia({
         idSocio: socio.idSocio, idPlanMembresia: selectedPlanId,
         precioOriginal: plan?.precio ?? precioOriginal, precioPagado, porcentajeDescuento: descuentoPct,
@@ -132,9 +147,14 @@ export const SocioDetailCard: React.FC<SocioDetailCardProps> = ({ socio, planes,
   };
 
   const handleCambiarPlan = async () => {
+    const plan = planes.find(p => p.id === selectedPlanId);
+    const precioAcordado = (plan?.precio ?? precioOriginal) * (1 - descuentoPct / 100);
+    if (precioPagado > precioAcordado) {
+      showToast('El monto a pagar no puede superar el precio final con descuento.', 'error');
+      return;
+    }
     setSubmitting(true);
     try {
-      const plan = planes.find(p => p.id === selectedPlanId);
       await apiService.cambiarPlan({
         idSocio: socio.idSocio, idPlanMembresia: selectedPlanId,
         precioOriginal: plan?.precio ?? precioOriginal, precioPagado, porcentajeDescuento: descuentoPct,
@@ -242,7 +262,11 @@ export const SocioDetailCard: React.FC<SocioDetailCardProps> = ({ socio, planes,
                 { label: 'Inicio Membresía', value: socio.fechaInicioMembresia ? new Date(socio.fechaInicioMembresia).toLocaleDateString('es-PE') : '—' },
                 { label: 'Vence', value: socio.fechaFinMembresia ? new Date(socio.fechaFinMembresia).toLocaleDateString('es-PE') : '—' },
                 { label: 'Forma de Pago', value: socio.formaPago || '—' },
+                { label: 'Precio Acordado', value: socio.precioAcordado != null ? `S/ ${socio.precioAcordado.toFixed(2)}` : '—' },
                 { label: 'Monto Pagado', value: socio.montoPagado != null ? `S/ ${socio.montoPagado.toFixed(2)}` : '—' },
+                { label: 'Saldo Pendiente (Deuda)', value: socio.montoDeuda != null && socio.montoDeuda > 0 ? `S/ ${socio.montoDeuda.toFixed(2)}` : 'S/ 0.00' },
+                { label: 'Límite de Pago', value: socio.montoDeuda != null && socio.montoDeuda > 0 && socio.fechaLimitePago ? new Date(socio.fechaLimitePago).toLocaleDateString('es-PE') : '—' },
+                { label: 'Días Restantes para Pagar', value: socio.montoDeuda != null && socio.montoDeuda > 0 && socio.diasRestantesPago != null ? (socio.diasRestantesPago >= 0 ? `${socio.diasRestantesPago} día(s)` : `VENCIDO (hace ${Math.abs(socio.diasRestantesPago)} días)`) : '—' },
                 { label: 'Estado Contrato', value: socio.estadoContrato || '—' },
                 { label: 'Estado Membresía', value: socio.estadoMembresia || '—' },
               ].map(item => (
@@ -357,14 +381,62 @@ export const SocioDetailCard: React.FC<SocioDetailCardProps> = ({ socio, planes,
                       <input type="number" min={0} max={100} value={descuentoPct} onChange={e => setDescuentoPct(Number(e.target.value))} style={inputStyle} />
                     </div>
                     <div>
-                      <label style={labelStyle}>Precio Final (S/)</label>
-                      <input type="number" value={precioPagado} readOnly style={{ ...inputStyle, opacity: 0.7 }} />
+                      <label style={labelStyle}>Monto a Pagar Hoy (S/)</label>
+                      <input type="number" min={0} value={precioPagado} onChange={e => setPrecioPagado(Number(e.target.value))} style={inputStyle} />
                     </div>
                   </div>
                   {descuentoPct > 0 && (
                     <div>
                       <label style={labelStyle}>Descuento autorizado por</label>
                       <input value={descuentoAuth} onChange={e => setDescuentoAuth(e.target.value)} placeholder="Nombre del autorizante" style={inputStyle} />
+                    </div>
+                  )}
+                  {/* Banner de tipo de pago */}
+                  {selectedPlanId > 0 && (
+                    <div style={{
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      lineHeight: '1.5',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '10px',
+                      ...(isExcedido
+                        ? { background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', color: '#fca5a5' }
+                        : isAdelanto
+                        ? { background: 'rgba(234,179,8,0.12)', border: '1px solid rgba(234,179,8,0.35)', color: '#fde68a' }
+                        : { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)', color: '#86efac' }
+                      ),
+                    }}>
+                      <span style={{ fontSize: '18px', lineHeight: '1.2' }}>
+                        {isExcedido ? '🚫' : isAdelanto ? '💰' : '✅'}
+                      </span>
+                      <div>
+                        {isExcedido && (
+                          <>
+                            <strong>Monto excede el precio final</strong>
+                            <div style={{ opacity: 0.85, marginTop: '2px' }}>El monto ingresado (S/ {precioPagado.toFixed(2)}) supera el precio acordado de S/ {precioConDescuento.toFixed(2)}.</div>
+                          </>
+                        )}
+                        {isAdelanto && (
+                          <>
+                            <strong>⚠️ Pago con adelanto — Contrato parcial</strong>
+                            <div style={{ opacity: 0.85, marginTop: '2px' }}>
+                              Paga hoy: <strong>S/ {precioPagado.toFixed(2)}</strong> · Saldo pendiente: <strong>S/ {saldoPendiente.toFixed(2)}</strong>
+                            </div>
+                            <div style={{ opacity: 0.75, marginTop: '3px', fontSize: '11px' }}>
+                              📅 Fecha límite para cancelar el saldo: <strong>{fechaLimite15}</strong>
+                            </div>
+                          </>
+                        )}
+                        {!isAdelanto && !isExcedido && precioPagado > 0 && (
+                          <>
+                            <strong>Pago completo</strong>
+                            <div style={{ opacity: 0.85, marginTop: '2px' }}>El socio cancela el total de S/ {precioConDescuento.toFixed(2)}.</div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   )}
                   <div>
@@ -377,8 +449,22 @@ export const SocioDetailCard: React.FC<SocioDetailCardProps> = ({ socio, planes,
                       ))}
                     </select>
                   </div>
-                  <button onClick={accionActiva === 'renovar' ? handleRenovar : handleCambiarPlan} disabled={submitting || !selectedPlanId} style={primaryBtnStyle}>
-                    {submitting ? 'Procesando...' : accionActiva === 'renovar' ? 'Confirmar Renovación' : 'Confirmar Cambio de Plan'}
+                  <button
+                    onClick={accionActiva === 'renovar' ? handleRenovar : handleCambiarPlan}
+                    disabled={submitting || !selectedPlanId || isExcedido}
+                    style={{
+                      ...primaryBtnStyle,
+                      ...(isAdelanto ? { background: 'linear-gradient(135deg, #d97706, #b45309)' } : {}),
+                    }}
+                  >
+                    {submitting
+                      ? 'Procesando...'
+                      : isAdelanto
+                      ? `💰 Confirmar Adelanto de S/ ${precioPagado.toFixed(2)}`
+                      : accionActiva === 'renovar'
+                      ? '✅ Confirmar Renovación'
+                      : '✅ Confirmar Cambio de Plan'
+                    }
                   </button>
                 </div>
               )}

@@ -3,8 +3,8 @@ import type { User } from '../../../domain/entities';
 
 interface AdminSidebarProps {
   user: User;
-  activeTab: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators';
-  setActiveTab: (tab: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators') => void;
+  activeTab: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators' | 'pos' | 'inventory';
+  setActiveTab: (tab: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators' | 'pos' | 'inventory') => void;
   onLogout: () => void;
 }
 
@@ -204,6 +204,74 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             {isCollapsed && (
               <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
                 Membresías y Matrículas
+              </div>
+            )}
+          </button>
+
+          {/* Ventas & POS Button */}
+          <button
+            onClick={() => setActiveTab('pos')}
+            className={`w-full flex items-center rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer relative group ${
+              isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'
+            } ${
+              activeTab === 'pos'
+                ? 'bg-[#00b894] text-white shadow-lg shadow-[#00b894]/25 font-black'
+                : 'text-slate-300 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <svg
+              className="w-5 h-5 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+            </svg>
+            <span
+              className={`transition-opacity duration-200 ${
+                isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+              }`}
+            >
+              Ventas & Caja
+            </span>
+            {isCollapsed && (
+              <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
+                Ventas & Caja
+              </div>
+            )}
+          </button>
+
+          {/* Inventario / Stock Button */}
+          <button
+            onClick={() => setActiveTab('inventory')}
+            className={`w-full flex items-center rounded-2xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer relative group ${
+              isCollapsed ? 'justify-center p-3' : 'space-x-3 px-4 py-3'
+            } ${
+              activeTab === 'inventory'
+                ? 'bg-[#00b894] text-white shadow-lg shadow-[#00b894]/25 font-black'
+                : 'text-slate-300 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <svg
+              className="w-5 h-5 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+            <span
+              className={`transition-opacity duration-200 ${
+                isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+              }`}
+            >
+              Inventario de Stock
+            </span>
+            {isCollapsed && (
+              <div className="absolute left-14 bg-slate-900 border border-white/10 text-white text-xs rounded-lg py-1 px-2.5 whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50 shadow-xl font-bold">
+                Inventario
               </div>
             )}
           </button>

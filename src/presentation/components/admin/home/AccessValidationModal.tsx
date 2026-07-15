@@ -52,6 +52,18 @@ export const AccessValidationModal: React.FC<AccessValidationModalProps> = ({
             <p className="text-xs font-semibold opacity-85 mt-0.5">
               Estado: Membresía {socio.estadoSocio}
             </p>
+            {socio.montoDeuda && socio.montoDeuda > 0 ? (
+              <div className="mt-2 text-xs font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-lg p-2 animate-pulse">
+                ⚠️ Saldo pendiente: S/ {socio.montoDeuda.toFixed(2)}
+                {socio.diasRestantesPago !== undefined && (
+                  <span className="block text-[10px] mt-0.5 opacity-90 font-semibold">
+                    {socio.diasRestantesPago >= 0 
+                      ? `Quedan ${socio.diasRestantesPago} días para cancelar` 
+                      : `PAGO VENCIDO hace ${Math.abs(socio.diasRestantesPago)} días`}
+                  </span>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -77,6 +89,22 @@ export const AccessValidationModal: React.FC<AccessValidationModalProps> = ({
             <span className="text-text-secondary">Plan Contratado:</span>
             <span className="font-bold text-white">{socio.nombrePlan || '—'}</span>
           </div>
+          {socio.montoDeuda && socio.montoDeuda > 0 ? (
+            <>
+              <div className="flex justify-between border-b border-white/5 pb-2 text-amber-400 font-bold">
+                <span>Saldo Pendiente:</span>
+                <span>S/ {socio.montoDeuda.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between border-b border-white/5 pb-2 text-slate-300">
+                <span>Límite de Pago:</span>
+                <span className="font-mono">
+                  {socio.fechaLimitePago 
+                    ? new Date(socio.fechaLimitePago).toLocaleDateString('es-PE') 
+                    : '—'}
+                </span>
+              </div>
+            </>
+          ) : null}
           <div className="flex justify-between border-b border-white/5 pb-2">
             <span className="text-text-secondary">Fecha de Matrícula:</span>
             <span className="font-mono text-white">

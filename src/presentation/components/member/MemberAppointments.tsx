@@ -9,7 +9,7 @@ export const MemberAppointments: React.FC<MemberAppointmentsProps> = ({ idSocio 
   const [citas, setCitas] = useState<Cita[]>([]);
   const [especialistas, setEspecialistas] = useState<Colaborador[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [, setError] = useState('');
 
   // Form states
   const [showBookingForm, setShowBookingForm] = useState(false);

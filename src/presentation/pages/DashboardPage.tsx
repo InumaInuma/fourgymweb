@@ -11,6 +11,7 @@ import { MemberBottomBar } from '../components/member/MemberBottomBar';
 import { MemberBookings } from '../components/member/MemberBookings';
 import { MemberNotifications } from '../components/member/MemberNotifications';
 import { ClassCarousel } from '../components/ClassCarousel';
+import { BarFitSection } from '../components/BarFitSection';
 import { MemberSubscription } from '../components/member/MemberSubscription';
 import { MemberRoutine } from '../components/member/MemberRoutine';
 import { MemberNutrition } from '../components/member/MemberNutrition';
@@ -27,6 +28,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [seats, setSeats] = useState<ClassSpot[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  const getNext7Days = () => {
+    const days = [];
+    const base = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  };
 
   // Tabs navigation state for members: 'home' | 'classes' | 'bookings' | 'notifications' | 'subscription' | 'routine' | 'nutrition' | 'appointments'
   const [activeTab, setActiveTab] = useState<'home' | 'classes' | 'bookings' | 'notifications' | 'subscription' | 'routine' | 'nutrition' | 'appointments'>('home');
@@ -42,6 +54,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [bookedSeatId, setBookedSeatId] = useState<number | null>(null);
+
+  // Home summary states
+  const [activeRoutine, setActiveRoutine] = useState<any | null>(null);
+  const [activeDiet, setActiveDiet] = useState<any | null>(null);
+  const [nextAppointment, setNextAppointment] = useState<any | null>(null);
+
+  const loadSummaryData = async () => {
+    if (!user.idSocio) return;
+    try {
+      const [routine, diet, appointments] = await Promise.all([
+        apiService.getSocioRutinaActiva(user.idSocio).catch(() => null),
+        apiService.getSocioPlanAlimentario(user.idSocio).catch(() => null),
+        apiService.getSocioCitas(user.idSocio).catch(() => []),
+      ]);
+      setActiveRoutine(routine);
+      setActiveDiet(diet);
+      if (appointments && appointments.length > 0) {
+        const upcoming = appointments
+          .filter((a: any) => a.estado === 'Programada' && new Date(a.fechaHora) >= new Date())
+          .sort((a: any, b: any) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime())[0];
+        setNextAppointment(upcoming || null);
+      } else {
+        setNextAppointment(null);
+      }
+    } catch (err) {
+      console.error('Error loading summary data:', err);
+    }
+  };
 
   // Fetch classes on mount (do NOT automatically select a class so user sees listing first)
   useEffect(() => {
@@ -74,6 +114,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
   useEffect(() => {
     if (user.role === 'member') {
       loadNotifications();
+      loadSummaryData();
       const interval = setInterval(loadNotifications, 30000);
       return () => clearInterval(interval);
     }
@@ -112,6 +153,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
         prev.map((s) =>
           s.id === payload.asientoId - 1
             ? { ...s, status: 1 as const, occupantName: payload.nombreSocio }
+            : s
+        )
+      );
+    },
+    onSeatLiberado: (payload) => {
+      setSeats((prev) =>
+        prev.map((s) =>
+          s.id === payload.asientoId - 1
+            ? { ...s, status: 0 as const, occupantName: undefined }
             : s
         )
       );
@@ -310,40 +360,183 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
             {/* Screen A: Browse Classes Carousel (when selectedClass is null) */}
             {selectedClass === null ? (
               <>
-                {/* User Welcome Banner */}
-                <section className="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between border border-white/5 relative overflow-hidden shrink-0">
-                  <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-brand-green/10 to-transparent pointer-events-none"></div>
-                  <div>
-                    <span className="text-xs font-bold text-brand-green uppercase tracking-widest bg-brand-green/10 px-3 py-1 rounded-full">Socio Activo • {user.subscriptionType || 'Premium'}</span>
-                    <h1 className="text-2xl md:text-3xl font-black text-white mt-3 leading-tight tracking-tight">
-                      Hola, {user.name} 👋
-                    </h1>
-                    <p className="text-sm text-text-secondary mt-1">¿Listo para entrenar hoy? Explora las clases disponibles y agenda tu asiento.</p>
+                {/* Sleek Minimal Welcome Bar */}
+                <div className="px-1 mb-2">
+                  <h1 className="text-2xl font-black text-white tracking-tight">
+                    Hola, {user.name.split(' ')[0]} 👋
+                  </h1>
+                  <p className="text-xs text-text-secondary">Socio Activo • <span className="text-brand-green font-bold">{user.subscriptionType || 'Premium'}</span></p>
+                </div>
+
+                {/* Rolling 7-Day Calendar Bar */}
+                {loadingClasses ? null : classes.length > 0 && (
+                  <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-none mb-2 mt-4">
+                    {getNext7Days().map((date, idx) => {
+                      const isSame = date.getFullYear() === selectedDate.getFullYear() &&
+                                     date.getMonth() === selectedDate.getMonth() &&
+                                     date.getDate() === selectedDate.getDate();
+                      const dayName = idx === 0 ? 'Hoy' : date.toLocaleDateString('es-ES', { weekday: 'short' }).slice(0, 3).toUpperCase();
+                      const dayNum = date.getDate();
+                      
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedDate(date)}
+                          className={`flex-shrink-0 flex flex-col items-center justify-center w-14 h-16 rounded-2xl border transition-all cursor-pointer ${
+                            isSame
+                              ? 'bg-brand-green border-brand-green text-slate-950 shadow-md shadow-brand-green/20'
+                              : 'bg-slate-950/40 border-white/5 text-slate-300 hover:border-white/20'
+                          }`}
+                        >
+                          <span className="text-[9px] font-black tracking-wider uppercase opacity-75">{dayName}</span>
+                          <span className="text-base font-black mt-0.5">{dayNum}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div className="mt-4 md:mt-0 flex items-center gap-3 bg-slate-950/40 border border-white/5 rounded-2xl p-4">
-                    <div className="w-10 h-10 rounded-full bg-brand-green/20 flex items-center justify-center text-brand-green font-bold">
-                      💪
-                    </div>
-                    <div>
-                      <p className="text-xs text-text-secondary font-medium">Próxima reserva</p>
-                      <p className="text-xs font-bold text-white">Ninguna programada</p>
-                    </div>
-                  </div>
-                </section>
+                )}
 
                 {/* Horizontal Scroll Carousel */}
                 {loadingClasses ? (
                   <div className="text-center py-12 text-slate-400 text-xs font-bold">Cargando clases...</div>
                 ) : classes.length === 0 ? (
                   <div className="text-center py-12 text-slate-400 text-sm">
-                    No hay clases programadas para hoy.
+                    No hay clases programadas disponibles.
                   </div>
-                ) : (
-                  <ClassCarousel
-                    classes={classes}
-                    onSelectClass={(c) => setSelectedClass(c)}
-                  />
+                ) : (() => {
+                  const dayFiltered = classes.filter(c => {
+                    const cDate = new Date(c.fechaInicio ?? '');
+                    return cDate.getFullYear() === selectedDate.getFullYear() &&
+                           cDate.getMonth() === selectedDate.getMonth() &&
+                           cDate.getDate() === selectedDate.getDate();
+                  });
+
+                  if (dayFiltered.length === 0) {
+                    return (
+                      <div className="text-center py-12 bg-slate-950/20 border border-white/5 rounded-3xl p-6 text-slate-400 text-xs font-bold">
+                        No hay clases programadas para este día.
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <ClassCarousel
+                      classes={dayFiltered}
+                      onSelectClass={(c) => setSelectedClass(c)}
+                    />
+                  );
+                })()}
+
+                {/* Mi Enfoque de Hoy Section */}
+                {!loadingClasses && classes.length > 0 && (
+                  <div className="w-full space-y-4 pt-4 border-t border-white/5">
+                    <div className="px-1">
+                      <h2 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        <span className="w-1.5 h-6 bg-brand-green rounded-full animate-pulse"></span>
+                        Mi enfoque de hoy
+                      </h2>
+                      <p className="text-xs text-text-secondary mt-1">Sigue tu plan diario de entrenamiento y nutrición para maximizar tus resultados.</p>
+                    </div>
+
+                    {/* Next Appointment Alert Bar */}
+                    {nextAppointment && (
+                      <div className="bg-brand-green/10 border border-brand-green/20 text-brand-green rounded-2xl p-3 flex items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">📅</span>
+                          <span>
+                            Cita de <strong>{nextAppointment.tipoCita}</strong> con <strong>{nextAppointment.nombreEspecialista}</strong> el <strong>{(() => {
+                              const d = new Date(nextAppointment.fechaHora);
+                              return d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).toUpperCase();
+                            })()}</strong>
+                          </span>
+                        </div>
+                        <button 
+                          onClick={() => setActiveTab('appointments')} 
+                          className="text-[9px] font-black uppercase bg-brand-green text-slate-950 px-2.5 py-1.5 rounded-lg shrink-0 cursor-pointer active:scale-95 transition-all"
+                        >
+                          Ver Citas
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                      {/* Workout Box */}
+                      <div className="glass-panel border border-white/5 rounded-3xl p-5 flex flex-col justify-between hover:border-brand-green/20 transition-all duration-300">
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-brand-green/10 text-brand-green px-2.5 py-1 rounded-lg border border-brand-green/20">
+                              Rutina Diaria
+                            </span>
+                            <span className="text-lg">🏋️</span>
+                          </div>
+                          {activeRoutine ? (
+                            <>
+                              <h3 className="text-sm font-black text-white uppercase">{activeRoutine.nombreRutina}</h3>
+                              <p className="text-[11px] text-text-secondary mt-1">
+                                Objetivo: <span className="text-slate-200 font-medium">{activeRoutine.objetivo}</span>
+                              </p>
+                              <p className="text-[10px] text-brand-green font-bold mt-2">
+                                {activeRoutine.ejercicios?.length || 0} ejercicios asignados
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <h3 className="text-sm font-black text-white uppercase">Sin rutina activa</h3>
+                              <p className="text-[11px] text-text-secondary mt-1">Pídele a tu entrenador que te asigne una rutina de ejercicios.</p>
+                            </>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => setActiveTab('routine')}
+                          className="w-full py-2 bg-brand-green text-slate-950 hover:bg-emerald-400 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all mt-4 cursor-pointer text-center active:scale-95"
+                        >
+                          Entrenar Ahora
+                        </button>
+                      </div>
+
+                      {/* Nutrition Box */}
+                      <div className="glass-panel border border-white/5 rounded-3xl p-5 flex flex-col justify-between hover:border-accent-cyan/20 transition-all duration-300">
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-accent-cyan/10 text-accent-cyan px-2.5 py-1 rounded-lg border border-accent-cyan/20">
+                              Nutrición & Plan
+                            </span>
+                            <span className="text-lg">🍎</span>
+                          </div>
+                          {activeDiet ? (
+                            <>
+                              <h3 className="text-sm font-black text-white uppercase">Plan Alimentario Activo</h3>
+                              <p className="text-[11px] text-text-secondary mt-1">
+                                Meta: <span className="text-slate-200 font-medium">{activeDiet.caloriasObjetivo} kcal / día</span>
+                              </p>
+                              <div className="flex items-center gap-2 mt-2 text-[10px] text-accent-cyan font-bold uppercase tracking-wider">
+                                <span>P: {activeDiet.porcentajeProteina}%</span>
+                                <span>•</span>
+                                <span>C: {activeDiet.porcentajeCarbohidratos}%</span>
+                                <span>•</span>
+                                <span>G: {activeDiet.porcentajeGrasa}%</span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <h3 className="text-sm font-black text-white uppercase">Sin plan asignado</h3>
+                              <p className="text-[11px] text-text-secondary mt-1">Pídele a tu nutricionista que te arme una dieta personalizada.</p>
+                            </>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => setActiveTab('nutrition')}
+                          className="w-full py-2 bg-accent-cyan text-slate-950 hover:bg-cyan-400 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all mt-4 cursor-pointer text-center active:scale-95"
+                        >
+                          Ver Mi Dieta
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 )}
+
+                {/* Bar Fit healthy beverages and snacks carousel */}
+                {!loadingClasses && classes.length > 0 && <BarFitSection />}
               </>
             ) : (
               /* Screen B: Seat Reservation Layout (when selectedClass is not null) */
@@ -429,7 +622,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
                                   <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
-                                  <span className="font-bold">{c.time}</span>
+                                  <span className="font-bold">{(() => {
+                                    const d = new Date(c.fechaInicio ?? '');
+                                    const options: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' };
+                                    return `${d.toLocaleDateString('es-ES', options).toUpperCase()} - ${c.time}`;
+                                  })()}</span>
                                 </div>
                                 <div className="font-black text-white font-mono bg-white/5 border border-white/5 px-2.5 py-1 rounded-lg">
                                   {c.price === 0 ? <span className="text-emerald-400">GRATIS</span> : `S/ ${c.price.toFixed(2)}`}

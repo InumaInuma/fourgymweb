@@ -26,6 +26,7 @@ interface Exercise {
   reps: string;
   weight: string;
   rpe: number;
+  diaSemana: number; // 1=Lunes, 2=Martes, ... 7=Domingo
 }
 
 interface ProgressLog {
@@ -46,6 +47,8 @@ export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user, onLogo
   const [exerciseReps, setExerciseReps] = useState('10-12');
   const [exerciseWeight, setExerciseWeight] = useState('60');
   const [exerciseRpe, setExerciseRpe] = useState(8);
+  const [exerciseDia, setExerciseDia] = useState(1); // 1=Lunes ... 7=Domingo
+  const [gruposMusculares, setGruposMusculares] = useState<string[]>(['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core']);
 
   // Progress logger states
   const [logWeight, setLogWeight] = useState('');
@@ -86,6 +89,14 @@ export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user, onLogo
 
   useEffect(() => {
     fetchAthletes();
+    apiService.getGruposMusculares()
+      .then(data => {
+        if (data && data.length > 0) {
+          setGruposMusculares(data.map(g => g.nombre));
+          setExerciseGroup(data[0].nombre);
+        }
+      })
+      .catch(err => console.error('Error loading muscle groups:', err));
   }, []);
 
   // Cargar detalles de rutina y progreso de la BD
@@ -113,7 +124,8 @@ export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user, onLogo
         sets: ex.series,
         reps: ex.repeticiones,
         weight: ex.pesoAsignado || '',
-        rpe: ex.rpeObjetivo || 8
+        rpe: ex.rpeObjetivo || 8,
+        diaSemana: ex.diaSemana || 1
       })) : [];
       
       // 3. Actualizar
@@ -154,7 +166,8 @@ export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user, onLogo
       sets: exerciseSets,
       reps: exerciseReps,
       weight: exerciseWeight,
-      rpe: exerciseRpe
+      rpe: exerciseRpe,
+      diaSemana: exerciseDia
     };
     
     // Actualizar localmente
@@ -187,7 +200,8 @@ export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user, onLogo
           series: ex.sets,
           repeticiones: ex.reps,
           pesoAsignado: ex.weight,
-          rpeObjetivo: ex.rpe
+          rpeObjetivo: ex.rpe,
+          diaSemana: ex.diaSemana
         })),
         usuarioModificacion: user.name
       });
@@ -432,46 +446,112 @@ export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user, onLogo
                       </div>
                     </div>
 
-                    {/* Active exercises list */}
+                    {/* Active exercises list — grouped by day */}
                     <div className="space-y-3 mb-8">
                       <h3 className="text-xs font-black text-white uppercase tracking-widest">Ejercicios Programados</h3>
                       {selectedAthlete.routine.length === 0 ? (
                         <p className="text-slate-500 text-xs py-4 text-center">No hay ejercicios asignados en esta rutina.</p>
-                      ) : (
-                        <div className="grid grid-cols-1 gap-3">
-                          {selectedAthlete.routine.map(ex => (
-                            <div key={ex.id} className="flex items-center justify-between p-4 bg-slate-950/40 border border-white/5 rounded-2xl hover:border-red-500/20 transition-all">
-                              <div>
-                                <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider bg-red-500/10 px-2 py-0.5 rounded-full">{ex.muscleGroup}</span>
-                                <p className="text-sm font-bold text-white mt-1.5 uppercase">{ex.name}</p>
-                                <p className="text-xs text-text-secondary mt-0.5">
-                                  <span className="font-semibold text-slate-200">{ex.sets}</span> Series • <span className="font-semibold text-slate-200">{ex.reps}</span> Reps • <span className="font-semibold text-slate-200">{ex.weight} kg</span> • RPE <span className="text-red-400 font-bold">{ex.rpe}</span>
-                                </p>
+                      ) : (() => {
+                        const diasLabels: Record<number, string> = {
+                          1: '🟥 Lunes', 2: '🟧 Martes', 3: '🟨 Miércoles',
+                          4: '🟩 Jueves', 5: '🟦 Viernes', 6: '🟪 Sábado', 7: '⬜ Domingo'
+                        };
+                        const diasColors: Record<number, string> = {
+                          1: 'text-red-400 bg-red-500/10 border-red-500/20',
+                          2: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
+                          3: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+                          4: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+                          5: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+                          6: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+                          7: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
+                        };
+                        // group exercises by diaSemana
+                        const grouped = selectedAthlete.routine.reduce((acc, ex) => {
+                          const day = ex.diaSemana || 1;
+                          if (!acc[day]) acc[day] = [];
+                          acc[day].push(ex);
+                          return acc;
+                        }, {} as Record<number, Exercise[]>);
+
+                        return (
+                          <div className="space-y-4">
+                            {Object.entries(grouped).sort(([a], [b]) => Number(a) - Number(b)).map(([dia, exs]) => (
+                              <div key={dia} className="space-y-2">
+                                {/* Day header */}
+                                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${diasColors[Number(dia)]}`}>
+                                  {diasLabels[Number(dia)] ?? `Día ${dia}`}
+                                </div>
+                                {/* Exercises for this day */}
+                                <div className="grid grid-cols-1 gap-2 pl-2">
+                                  {exs.map(ex => (
+                                    <div key={ex.id} className="flex items-center justify-between p-4 bg-slate-950/40 border border-white/5 rounded-2xl hover:border-red-500/20 transition-all">
+                                      <div>
+                                        <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider bg-red-500/10 px-2 py-0.5 rounded-full">{ex.muscleGroup}</span>
+                                        <p className="text-sm font-bold text-white mt-1.5 uppercase">{ex.name}</p>
+                                        <p className="text-xs text-text-secondary mt-0.5">
+                                          <span className="font-semibold text-slate-200">{ex.sets}</span> Series •{' '}
+                                          <span className="font-semibold text-slate-200">{ex.reps}</span> Reps •{' '}
+                                          <span className="font-semibold text-slate-200">{ex.weight} kg</span> • RPE{' '}
+                                          <span className="text-red-400 font-bold">{ex.rpe}</span>
+                                        </p>
+                                      </div>
+                                      <button
+                                        onClick={() => handleRemoveExercise(ex.id)}
+                                        className="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-slate-950 flex items-center justify-center transition-all cursor-pointer text-xs"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
+                            ))}
+                            <div className="flex justify-end pt-3">
                               <button
-                                onClick={() => handleRemoveExercise(ex.id)}
-                                className="w-8 h-8 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-slate-950 flex items-center justify-center transition-all cursor-pointer text-xs"
+                                onClick={handleSaveRoutine}
+                                className="px-5 py-3 bg-gradient-to-r from-red-500 to-amber-500 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer hover:opacity-90 shadow-md shadow-red-500/15"
                               >
-                                ✕
+                                💾 Guardar Rutina en Base de Datos
                               </button>
                             </div>
-                          ))}
-                          <div className="flex justify-end pt-3">
-                            <button
-                              onClick={handleSaveRoutine}
-                              className="px-5 py-3 bg-gradient-to-r from-red-500 to-amber-500 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition-all cursor-pointer hover:opacity-90 shadow-md shadow-red-500/15"
-                            >
-                              💾 Guardar Rutina en Base de Datos
-                            </button>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
 
                     {/* Routine creator form */}
                     <div className="border-t border-white/5 pt-6 space-y-4">
                       <h3 className="text-xs font-black text-white uppercase tracking-widest">Agregar Ejercicio</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Día de la semana — full width */}
+                        <div className="sm:col-span-2 flex flex-col gap-1.5">
+                          <label className="text-[9px] text-text-secondary font-bold uppercase tracking-wider">Día de la Semana</label>
+                          <div className="grid grid-cols-7 gap-1">
+                            {[
+                              { n: 1, label: 'Lun', color: 'red' },
+                              { n: 2, label: 'Mar', color: 'orange' },
+                              { n: 3, label: 'Mié', color: 'yellow' },
+                              { n: 4, label: 'Jue', color: 'emerald' },
+                              { n: 5, label: 'Vie', color: 'blue' },
+                              { n: 6, label: 'Sáb', color: 'purple' },
+                              { n: 7, label: 'Dom', color: 'slate' },
+                            ].map(({ n, label, color }) => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => setExerciseDia(n)}
+                                className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                                  exerciseDia === n
+                                    ? `bg-${color}-500/20 border-${color}-500/50 text-${color}-300`
+                                    : 'bg-slate-950 border-white/10 text-slate-500 hover:border-white/20'
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[9px] text-text-secondary font-bold uppercase tracking-wider">Nombre del Ejercicio</label>
                           <input
@@ -489,12 +569,11 @@ export const TrainerDashboard: React.FC<TrainerDashboardProps> = ({ user, onLogo
                             onChange={(e) => setExerciseGroup(e.target.value)}
                             className="bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500"
                           >
-                            <option value="Pecho">Pecho</option>
-                            <option value="Espalda">Espalda</option>
-                            <option value="Piernas">Piernas</option>
-                            <option value="Hombros">Hombros</option>
-                            <option value="Brazos">Brazos</option>
-                            <option value="Core">Core</option>
+                            {gruposMusculares.map((grupo) => (
+                              <option key={grupo} value={grupo}>
+                                {grupo}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="flex flex-col gap-1.5">

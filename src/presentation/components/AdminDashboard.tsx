@@ -14,6 +14,8 @@ import { AttendanceClassSelector } from './admin/AttendanceClassSelector';
 import { MembershipsPanel } from './admin/MembershipsPanel';
 import { CollaboratorsPanel } from './admin/collaborators/CollaboratorsPanel';
 import { HomePanel } from './admin/HomePanel';
+import { InventoryPanel } from './admin/InventoryPanel';
+import { PosPanel } from './admin/PosPanel';
 
 interface BulkSlot {
   id: string;
@@ -33,19 +35,14 @@ const standardHours = [
 
 const getLocalDateString = (date = new Date()): string => {
   return date.toLocaleDateString('sv-SE');
-};
-
-
-interface AdminDashboardProps {
+};interface AdminDashboardProps {
   user: User;
   onLogout: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
-  // Tabs: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators'
-  const [activeTab, setActiveTab] = useState<'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators' | 'pos' | 'inventory'>('home');
 
-  // Classes list loaded from backend API
   const [classes, setClasses] = useState<GymClass[]>([]);
   const [selectedClass, setSelectedClass] = useState<GymClass | null>(null);
   const [seats, setSeats] = useState<ClassSpot[]>([]);
@@ -91,11 +88,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
 
   // Bulk schedule states
   const [bulkStartDate, setBulkStartDate] = useState(() => getLocalDateString());
-  const [bulkEndDate, setBulkEndDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 30); // 1 month default
-    return getLocalDateString(d);
-  });
+  const [bulkEndDate, setBulkEndDate] = useState(() => getLocalDateString());
   const [bulkDays, setBulkDays] = useState<number[]>([1, 2, 3, 4, 5]); // default: Lunes a Viernes
   const [bulkSlots, setBulkSlots] = useState<BulkSlot[]>([
     { id: '1', title: 'Zumba Fitness', instructorId: '', roomName: 'Salón Principal', startTime: '08:00 a.m.', endTime: '09:00 a.m.', price: '20.00' },
@@ -396,6 +389,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
     onAsistenciaActualizada: () => {
       loadClassReservations();
     },
+    onSeatLiberado: (payload) => {
+      setSeats((prev) =>
+        prev.map((s) =>
+          s.id === payload.asientoId - 1
+            ? { ...s, status: 0 as const, occupantName: undefined }
+            : s
+        )
+      );
+      loadClassReservations();
+    },
   });
 
   const handleToggleAttendance = async (resId: string) => {
@@ -579,9 +582,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
 
         {/* Main interactive area: Form/Table or Attendance Map */}
         <div className="flex-grow">
-          {/* Tab 0: Home / Inicio Panel */}
+           {/* Tab 0: Home / Inicio Panel */}
           {activeTab === 'home' && (
             <HomePanel user={user} setActiveTab={setActiveTab} />
+          )}
+
+          {/* Tab 0.5: POS / Ventas Panel */}
+          {activeTab === 'pos' && (
+            <PosPanel user={user} />
           )}
 
           {/* Tab 1: Class Scheduler */}
@@ -728,6 +736,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
                   selectedSeatId={selectedSeatId}
                   associatedReservation={associatedReservation}
                   onToggleAttendance={handleToggleAttendance}
+                  selectedClass={selectedClass}
+                  onReservationCreated={loadClassReservations}
                 />
 
               </div>
@@ -743,6 +753,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }
           {/* Tab 4: Collaborators Panel */}
           {activeTab === 'collaborators' && user.role !== 'receptionist' && (
             <CollaboratorsPanel />
+          )}
+
+          {/* Tab 5: Inventory Panel */}
+          {activeTab === 'inventory' && (
+            <InventoryPanel />
           )}
         </div>
       </div>

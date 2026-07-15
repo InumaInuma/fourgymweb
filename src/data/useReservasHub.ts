@@ -15,10 +15,16 @@ export interface AsistenciaActualizadaPayload {
   asistio: boolean;
 }
 
+export interface SeatLiberadoPayload {
+  idClase: number;
+  asientoId: number;
+}
+
 interface UseReservasHubOptions {
   idClase: number | null;
   onSeatReservado?: (payload: SeatReservadoPayload) => void;
   onAsistenciaActualizada?: (payload: AsistenciaActualizadaPayload) => void;
+  onSeatLiberado?: (payload: SeatLiberadoPayload) => void;
 }
 
 /**
@@ -27,16 +33,17 @@ interface UseReservasHubOptions {
  * Flujo:
  * 1. Conecta al hub cuando el componente monta.
  * 2. Se une al grupo "clase-{idClase}" para recibir solo eventos de esa clase.
- * 3. Registra callbacks para los eventos "SeatReservado" y "AsistenciaActualizada".
+ * 3. Registra callbacks para los eventos "SeatReservado", "AsistenciaActualizada" y "SeatLiberado".
  * 4. Si el idClase cambia, sale del grupo anterior y se une al nuevo.
  * 5. Al desmontar, sale del grupo y cierra la conexión limpiamente.
  *
- * @param options - idClase, callbacks onSeatReservado, onAsistenciaActualizada
+ * @param options - idClase, callbacks onSeatReservado, onAsistenciaActualizada, onSeatLiberado
  */
 export const useReservasHub = ({
   idClase,
   onSeatReservado,
   onAsistenciaActualizada,
+  onSeatLiberado,
 }: UseReservasHubOptions) => {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const prevClaseIdRef = useRef<number | null>(null);
@@ -70,6 +77,10 @@ export const useReservasHub = ({
       onAsistenciaActualizada?.(payload);
     };
 
+    const handleSeatLiberado = (payload: SeatLiberadoPayload) => {
+      onSeatLiberado?.(payload);
+    };
+
     const startConnection = async () => {
       try {
         if (connection.state === signalR.HubConnectionState.Disconnected) {
@@ -79,8 +90,10 @@ export const useReservasHub = ({
         // Registrar los listeners (off primero para evitar duplicados en hot-reload)
         connection.off('SeatReservado');
         connection.off('AsistenciaActualizada');
+        connection.off('SeatLiberado');
         connection.on('SeatReservado', handleSeatReservado);
         connection.on('AsistenciaActualizada', handleAsistenciaActualizada);
+        connection.on('SeatLiberado', handleSeatLiberado);
 
         // Unirse al grupo de la nueva clase
         if (idClase !== null) {
@@ -117,6 +130,7 @@ export const useReservasHub = ({
         }
         connection.off('SeatReservado', handleSeatReservado);
         connection.off('AsistenciaActualizada', handleAsistenciaActualizada);
+        connection.off('SeatLiberado', handleSeatLiberado);
       };
       cleanUp();
     };

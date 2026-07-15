@@ -9,7 +9,7 @@ export const MemberNutrition: React.FC<MemberNutritionProps> = ({ idSocio }) => 
   const [diet, setDiet] = useState<PlanAlimentario | null>(null);
   const [evaluaciones, setEvaluaciones] = useState<EvaluacionAntropometrica[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [, setError] = useState('');
 
   useEffect(() => {
     const loadNutrition = async () => {

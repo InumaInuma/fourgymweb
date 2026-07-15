@@ -7,12 +7,11 @@ import { SocioMatriculaModal } from '../memberships/SocioMatriculaModal';
 
 // Sub-components
 import { AccessValidationModal } from './AccessValidationModal';
-import { VentaExpressModal } from './VentaExpressModal';
 import { AbrirCajaModal, CerrarCajaModal, ArqueoCajaModal } from './CajaModals';
 
 interface HomePanelProps {
   user: User;
-  setActiveTab: (tab: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators') => void;
+  setActiveTab: (tab: 'home' | 'schedule' | 'attendance' | 'memberships' | 'collaborators' | 'pos' | 'inventory') => void;
 }
 
 const getLocalDateString = (date = new Date()): string => {
@@ -50,7 +49,6 @@ export const HomePanel: React.FC<HomePanelProps> = ({ user, setActiveTab }) => {
   const [isClosingCaja, setIsClosingCaja] = useState(false);
   const [isViewingBalance, setIsViewingBalance] = useState(false);
   const [isRegisteringSocio, setIsRegisteringSocio] = useState(false);
-  const [isVentaRapidaOpen, setIsVentaRapidaOpen] = useState(false);
 
   // Form states loading & error
   const [cajaLoading, setCajaLoading] = useState(false);
@@ -177,11 +175,6 @@ export const HomePanel: React.FC<HomePanelProps> = ({ user, setActiveTab }) => {
     }
   };
 
-  // Quick product sale (Bar Fit)
-  const handleVentaRapidaSubmit = (producto: string, monto: string, metodoPago: string) => {
-    showToast(`🥤 Venta rápida completada: ${producto} cobrado por ${metodoPago} (S/ ${monto})`, 'success');
-    setIsVentaRapidaOpen(false);
-  };
 
   // Check-in logic
   const handleCheckin = (s?: SocioConMembresia) => {
@@ -598,11 +591,11 @@ export const HomePanel: React.FC<HomePanelProps> = ({ user, setActiveTab }) => {
           </button>
 
           <button
-            onClick={() => setIsVentaRapidaOpen(true)}
+            onClick={() => setActiveTab('pos')}
             className="flex flex-col items-center justify-center py-4 bg-[#141226]/50 border border-white/5 rounded-2xl hover:bg-white/5 transition-all cursor-pointer group text-center"
           >
             <div className="text-lg mb-1 group-hover:scale-110 transition-transform">🛍️</div>
-            <span className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase tracking-wide">Venta Rápida</span>
+            <span className="text-[10px] font-bold text-slate-300 group-hover:text-white uppercase tracking-wide">Venta Rápida (POS)</span>
           </button>
         </div>
       </div>
@@ -711,12 +704,7 @@ export const HomePanel: React.FC<HomePanelProps> = ({ user, setActiveTab }) => {
         onClose={() => setIsViewingBalance(false)}
       />
 
-      {/* Venta Express Express (Bar Fit) */}
-      <VentaExpressModal
-        isOpen={isVentaRapidaOpen}
-        onClose={() => setIsVentaRapidaOpen(false)}
-        onSubmit={handleVentaRapidaSubmit}
-      />
+
 
       {/* Validation Control Access Modal */}
       <AccessValidationModal

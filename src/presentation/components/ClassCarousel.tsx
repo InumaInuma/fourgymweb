@@ -17,7 +17,7 @@ export const ClassCarousel: React.FC<ClassCarouselProps> = ({
       <div className="flex items-center justify-between px-1">
         <h2 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
           <span className="w-1.5 h-6 bg-brand-green rounded-full animate-pulse"></span>
-          Descubre las clases de hoy
+          Próximas clases
         </h2>
         <span className="text-xs text-text-secondary">Desliza para ver más</span>
       </div>
@@ -47,9 +47,14 @@ export const ClassCarousel: React.FC<ClassCarouselProps> = ({
               {/* Dark gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
 
-              {/* Time Badge */}
-              <div className="absolute top-0 right-4 bg-brand-green text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-b-xl shadow-md uppercase tracking-wider">
-                {gymClass.time}
+              {/* Time & Date Badge */}
+              <div className="absolute top-0 right-4 bg-brand-green text-slate-950 font-black text-[10px] px-3.5 py-1.5 rounded-b-xl shadow-md uppercase tracking-wider flex flex-col items-center leading-tight">
+                <span className="text-[8px] opacity-75">{(() => {
+                  const d = new Date(gymClass.fechaInicio ?? '');
+                  const options: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' };
+                  return d.toLocaleDateString('es-ES', options);
+                })()}</span>
+                <span className="text-[11px] font-black">{gymClass.time}</span>
               </div>
 
               {/* Spots Left Badge */}

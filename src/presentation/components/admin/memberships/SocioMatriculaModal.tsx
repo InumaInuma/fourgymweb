@@ -386,7 +386,7 @@ export const SocioMatriculaModal: React.FC<SocioMatriculaModalProps> = ({
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="text-[10px] font-black text-slate-300 uppercase tracking-tight">
-                    Precio Cobrado (S/) *
+                    Monto a Pagar Hoy (S/) *
                   </label>
                   {isCustomPrice && (
                     <button
@@ -415,9 +415,33 @@ export const SocioMatriculaModal: React.FC<SocioMatriculaModalProps> = ({
                 />
                 {renderFieldError('precioPagado')}
                 <span className="text-[9px] text-text-secondary mt-1.5 block">
-                  Permite sobreescribir el precio de lista para aplicar descuentos especiales.
+                  Costo de lista del plan: S/ {planes.find(p => p.id === selectedPlanId)?.precio.toFixed(2)}. 
+                  Si ingresa un monto menor, se guardará como Pago Parcial con saldo pendiente.
                 </span>
               </div>
+
+              {/* Live Remaining Balance Calculation */}
+              {(() => {
+                const plan = planes.find(p => p.id === selectedPlanId);
+                if (!plan) return null;
+                const paid = parseFloat(precioPagado);
+                if (isNaN(paid) || paid >= plan.precio) return null;
+                const remaining = plan.precio - paid;
+                const limitDate = new Date();
+                limitDate.setDate(limitDate.getDate() + 15);
+                const limitDateStr = limitDate.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                return (
+                  <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1.5 animate-fade-in">
+                    <div className="flex justify-between items-center text-xs font-black text-amber-400 uppercase tracking-wider">
+                      <span>Saldo Restante (Deuda):</span>
+                      <span className="font-mono text-sm">S/ {remaining.toFixed(2)}</span>
+                    </div>
+                    <p className="text-[10px] text-amber-300 font-semibold leading-relaxed">
+                      ⚠️ El socio deberá cancelar el monto restante de <strong>S/ {remaining.toFixed(2)}</strong> en un plazo máximo de <strong>15 días</strong> (fecha límite: <strong>{limitDateStr}</strong>).
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           )}
 

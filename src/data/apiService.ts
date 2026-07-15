@@ -125,6 +125,10 @@ export interface SocioConMembresia {
   estadoContrato?: string;
   formaPago?: string;
   montoPagado?: number;
+  precioAcordado?: number;
+  montoDeuda?: number;
+  fechaLimitePago?: string;
+  diasRestantesPago?: number;
   fechaInicioMembresia?: string;
   fechaFinMembresia?: string;
   estadoMembresia?: string;
@@ -599,6 +603,31 @@ export const apiService = {
     }
   },
 
+  async registrarInvitado(req: {
+    nombre: string;
+    apellidoPaterno: string;
+    apellidoMaterno?: string;
+    numeroDocumento?: string;
+    idTipoDocumento?: number;
+    telefono?: string;
+    correo?: string;
+  }): Promise<{ success: boolean; data?: number; message: string }> {
+    try {
+      const res = await api.post<ApiResponse<number>>('/membresias/socios/registrar-invitado', req);
+      return {
+        success: res.isSuccess ?? false,
+        data: res.data,
+        message: res.message || 'Invitado registrado con éxito.',
+      };
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al registrar el invitado.';
+      return {
+        success: false,
+        message: errMsg,
+      };
+    }
+  },
+
   async cancelarReserva(idReserva: number, usuario: string): Promise<boolean> {
     try {
       const res = await api.delete<ApiResponse<boolean>>(`/Reservas/${idReserva}?usuarioModificacion=${encodeURIComponent(usuario)}`);
@@ -830,6 +859,7 @@ export const apiService = {
       repeticiones: string;
       pesoAsignado?: string;
       rpeObjetivo?: number;
+      diaSemana?: number;
     }>;
     usuarioModificacion?: string;
   }): Promise<boolean> {
@@ -854,6 +884,19 @@ export const apiService = {
       return res.data;
     } catch (err: any) {
       return null;
+    }
+  },
+
+  async getGruposMusculares(): Promise<Array<{ id: number; nombre: string }>> {
+    try {
+      const res = await api.get<ApiResponse<Array<{ id: number; nombre: string }>>>('/Entrenamiento/grupos-musculares');
+      if (!res.isSuccess) {
+        throw new Error(res.message || 'Error al obtener los grupos musculares.');
+      }
+      return res.data;
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.message || 'Error al obtener los grupos musculares.';
+      throw new Error(errMsg);
     }
   },
 
@@ -1222,6 +1265,53 @@ export const apiService = {
       return res.data;
     } catch (err: any) {
       throw new Error(err.response?.data?.message || err.message || 'Error al obtener rutina de entrenamiento.');
+    }
+  },
+
+  async getProductos(): Promise<any[]> {
+    try {
+      const res = await api.get<ApiResponse<any[]>>('/Productos');
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener productos.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener productos.');
+    }
+  },
+
+  async saveProducto(product: any): Promise<any> {
+    try {
+      const res = await api.post<ApiResponse<any>>('/Productos', product);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al guardar producto.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al guardar producto.');
+    }
+  },
+
+  async registrarVenta(venta: any): Promise<boolean> {
+    try {
+      const res = await api.post<ApiResponse<boolean>>('/Productos/venta', venta);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al registrar venta.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al registrar venta.');
+    }
+  },
+
+  async getVentasHistorial(fechaInicio?: string, fechaFin?: string): Promise<any[]> {
+    try {
+      let url = '/Productos/ventas';
+      const params = new URLSearchParams();
+      if (fechaInicio) params.append('fechaInicio', fechaInicio);
+      if (fechaFin) params.append('fechaFin', fechaFin);
+      const queryStr = params.toString();
+      if (queryStr) url += `?${queryStr}`;
+
+      const res = await api.get<ApiResponse<any[]>>(url);
+      if (!res.isSuccess) throw new Error(res.message || 'Error al obtener historial de ventas.');
+      return res.data;
+    } catch (err: any) {
+      throw new Error(err.response?.data?.message || err.message || 'Error al obtener historial de ventas.');
     }
   },
 };
