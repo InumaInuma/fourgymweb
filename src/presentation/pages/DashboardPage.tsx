@@ -369,7 +369,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
                 </div>
 
                 {/* Rolling 7-Day Calendar Bar */}
-                {loadingClasses ? null : classes.length > 0 && (
+                {loadingClasses ? null : (
                   <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-none mb-2 mt-4">
                     {getNext7Days().map((date, idx) => {
                       const isSame = date.getFullYear() === selectedDate.getFullYear() &&
@@ -404,11 +404,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
                     No hay clases programadas disponibles.
                   </div>
                 ) : (() => {
+                  const now = new Date();
                   const dayFiltered = classes.filter(c => {
                     const cDate = new Date(c.fechaInicio ?? '');
-                    return cDate.getFullYear() === selectedDate.getFullYear() &&
-                           cDate.getMonth() === selectedDate.getMonth() &&
-                           cDate.getDate() === selectedDate.getDate();
+                    const isSameDate = cDate.getFullYear() === selectedDate.getFullYear() &&
+                                       cDate.getMonth() === selectedDate.getMonth() &&
+                                       cDate.getDate() === selectedDate.getDate();
+                    if (!isSameDate) return false;
+
+                    // Filtrar clases que ya iniciaron hace más de 30 minutos
+                    const startTime = new Date(c.fechaInicio ?? '').getTime();
+                    const limitTime = startTime + 30 * 60 * 1000;
+                    return limitTime > now.getTime();
                   });
 
                   if (dayFiltered.length === 0) {
@@ -428,7 +435,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
                 })()}
 
                 {/* Mi Enfoque de Hoy Section */}
-                {!loadingClasses && classes.length > 0 && (
+                {!loadingClasses && (
                   <div className="w-full space-y-4 pt-4 border-t border-white/5">
                     <div className="px-1">
                       <h2 className="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
@@ -536,7 +543,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
                 )}
 
                 {/* Bar Fit healthy beverages and snacks carousel */}
-                {!loadingClasses && classes.length > 0 && <BarFitSection />}
+                {!loadingClasses && <BarFitSection />}
               </>
             ) : (
               /* Screen B: Seat Reservation Layout (when selectedClass is not null) */
@@ -567,93 +574,106 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, onLogout }) 
                 {/* Available Classes Grid */}
                 {loadingClasses ? (
                   <div className="text-center py-12 text-slate-400 text-xs font-bold">Cargando clases...</div>
-                ) : classes.length === 0 ? (
-                  <div className="text-center py-12 text-slate-400 text-sm">
-                    No hay clases programadas disponibles.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {classes.map((c) => {
-                      const freeSpots = c.spotsTotal - c.spotsReserved;
-                      const isFull = freeSpots <= 0;
-                      return (
-                        <div
-                          key={c.id}
-                          className="group bg-white/5 border border-white/10 hover:border-accent-cyan/40 hover:bg-white/10 hover:scale-[1.01] transition-all duration-300 rounded-3xl p-5 flex flex-col justify-between h-80 relative overflow-hidden"
-                        >
-                          {/* Image/Cover background simulation */}
-                          <div className="absolute inset-0 z-0 opacity-15 pointer-events-none">
-                            <img src={c.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent"></div>
-                          </div>
+                ) : (() => {
+                  const now = new Date();
+                  const activeClasses = classes.filter(c => {
+                    const startTime = new Date(c.fechaInicio ?? '').getTime();
+                    const limitTime = startTime + 30 * 60 * 1000;
+                    return limitTime > now.getTime();
+                  });
 
-                          <div className="relative z-10 flex flex-col justify-between h-full">
-                            <div>
-                              {/* Top badges */}
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] bg-slate-950/80 backdrop-blur-md text-slate-300 font-bold border border-white/10 px-2.5 py-1 rounded-lg">
-                                  ⭐ {c.rating.toFixed(1)}
-                                </span>
-                                <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${
-                                  isFull 
-                                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/20' 
-                                    : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/10'
-                                }`}>
-                                  {isFull ? 'Lleno' : `${freeSpots} libres`}
-                                </span>
-                              </div>
+                  if (activeClasses.length === 0) {
+                    return (
+                      <div className="text-center py-12 text-slate-400 text-sm">
+                        No hay clases programadas disponibles.
+                      </div>
+                    );
+                  }
 
-                              {/* Title and Instructor */}
-                              <h3 className="text-xl font-black text-white mt-4 tracking-tight group-hover:text-accent-cyan transition-colors leading-tight">
-                                {c.title}
-                              </h3>
-                              
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <p className="text-xs text-brand-green font-semibold">Prof. {c.instructor}</p>
-                              </div>
-                              <p className="text-[10px] text-text-secondary mt-1 font-bold uppercase tracking-wider">{c.roomName || 'Salón Principal'}</p>
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {activeClasses.map((c) => {
+                        const freeSpots = c.spotsTotal - c.spotsReserved;
+                        const isFull = freeSpots <= 0;
+                        return (
+                          <div
+                            key={c.id}
+                            className="group bg-white/5 border border-white/10 hover:border-accent-cyan/40 hover:bg-white/10 hover:scale-[1.01] transition-all duration-300 rounded-3xl p-5 flex flex-col justify-between h-80 relative overflow-hidden"
+                          >
+                            {/* Image/Cover background simulation */}
+                            <div className="absolute inset-0 z-0 opacity-15 pointer-events-none">
+                              <img src={c.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent"></div>
                             </div>
 
-                            {/* Time, Price and CTA button */}
-                            <div>
-                              <div className="flex items-center justify-between border-t border-white/5 pt-3 mb-4 text-xs">
-                                <div className="flex items-center space-x-1.5 text-slate-300">
-                                  <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <div className="relative z-10 flex flex-col justify-between h-full">
+                              <div>
+                                {/* Top badges */}
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] bg-slate-950/80 backdrop-blur-md text-slate-300 font-bold border border-white/10 px-2.5 py-1 rounded-lg">
+                                    ⭐ {c.rating.toFixed(1)}
+                                  </span>
+                                  <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${
+                                    isFull 
+                                      ? 'bg-rose-500/20 text-rose-400 border border-rose-500/20' 
+                                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/10'
+                                  }`}>
+                                    {isFull ? 'Lleno' : `${freeSpots} libres`}
+                                  </span>
+                                </div>
+
+                                {/* Title and Instructor */}
+                                <h3 className="text-xl font-black text-white mt-4 tracking-tight group-hover:text-accent-cyan transition-colors leading-tight">
+                                  {c.title}
+                                </h3>
+                                
+                                <div className="flex items-center gap-2 mt-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                  <p className="text-xs text-brand-green font-semibold">Prof. {c.instructor}</p>
+                                </div>
+                                <p className="text-[10px] text-text-secondary mt-1 font-bold uppercase tracking-wider">{c.roomName || 'Salón Principal'}</p>
+                              </div>
+
+                              {/* Time, Price and CTA button */}
+                              <div>
+                                <div className="flex items-center justify-between border-t border-white/5 pt-3 mb-4 text-xs">
+                                  <div className="flex items-center space-x-1.5 text-slate-300">
+                                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="font-bold">{(() => {
+                                      const d = new Date(c.fechaInicio ?? '');
+                                      const options: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' };
+                                      return `${d.toLocaleDateString('es-ES', options).toUpperCase()} - ${c.time}`;
+                                    })()}</span>
+                                  </div>
+                                  <div className="font-black text-white font-mono bg-white/5 border border-white/5 px-2.5 py-1 rounded-lg">
+                                    {c.price === 0 ? <span className="text-emerald-400">GRATIS</span> : `S/ ${c.price.toFixed(2)}`}
+                                  </div>
+                                </div>
+
+                                <button
+                                  disabled={isFull}
+                                  onClick={() => setSelectedClass(c)}
+                                  className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
+                                    isFull 
+                                      ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5' 
+                                      : 'bg-accent-cyan text-slate-950 hover:bg-cyan-400 shadow-md shadow-accent-cyan/15 active:scale-95'
+                                  }`}
+                                >
+                                  <span>Reservar Sitio</span>
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                                   </svg>
-                                  <span className="font-bold">{(() => {
-                                    const d = new Date(c.fechaInicio ?? '');
-                                    const options: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' };
-                                    return `${d.toLocaleDateString('es-ES', options).toUpperCase()} - ${c.time}`;
-                                  })()}</span>
-                                </div>
-                                <div className="font-black text-white font-mono bg-white/5 border border-white/5 px-2.5 py-1 rounded-lg">
-                                  {c.price === 0 ? <span className="text-emerald-400">GRATIS</span> : `S/ ${c.price.toFixed(2)}`}
-                                </div>
+                                </button>
                               </div>
-
-                              <button
-                                disabled={isFull}
-                                onClick={() => setSelectedClass(c)}
-                                className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
-                                  isFull 
-                                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5' 
-                                    : 'bg-accent-cyan text-slate-950 hover:bg-cyan-400 shadow-md shadow-accent-cyan/15 active:scale-95'
-                                }`}
-                              >
-                                <span>Reservar Sitio</span>
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                                </svg>
-                              </button>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </>
             ) : (
               /* Screen B: Seat Reservation Layout (when selectedClass is not null) */

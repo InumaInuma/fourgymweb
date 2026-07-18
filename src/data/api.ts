@@ -14,10 +14,8 @@ interface CustomAxiosInstance extends AxiosInstance {
   delete<T = any, R = T, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<R>;
 }
 
-const isLocal = window.location.hostname === 'localhost';
-export const API_URL = isLocal
-  ? 'http://localhost:5167/api'
-  : import.meta.env.VITE_API_URL || 'http://localhost:5167/api';
+// CONFIGURACIÓN DE CONEXIÓN A LA API (Cargada desde archivos .env):
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5167/api';
 
 const api = axios.create({
   baseURL: API_URL,

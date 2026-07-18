@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 
-const HUB_URL = 'http://localhost:5167/hubs/reservas';
+// CONFIGURACIÓN DEL HUB DE SIGNALR (Tiempo real, cargado desde archivos .env):
+const HUB_URL = import.meta.env.VITE_HUB_URL || 'http://localhost:5167/hubs/reservas';
 
 export interface SeatReservadoPayload {
   idClase: number;
