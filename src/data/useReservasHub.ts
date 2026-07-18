@@ -59,6 +59,18 @@ export const useReservasHub = ({
     if (!connectionRef.current) {
       connectionRef.current = new signalR.HubConnectionBuilder()
         .withUrl(HUB_URL, {
+          accessTokenFactory: () => {
+            const savedUserStr = localStorage.getItem('fourgym_user');
+            if (savedUserStr) {
+              try {
+                const savedUser = JSON.parse(savedUserStr);
+                return savedUser?.token || '';
+              } catch {
+                return '';
+              }
+            }
+            return '';
+          },
           skipNegotiation: false,
           transport: signalR.HttpTransportType.WebSockets,
         })

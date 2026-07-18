@@ -7,6 +7,7 @@ export interface User {
   avatarUrl?: string;
   subscriptionType?: string;
   idSocio?: number;
+  token?: string;
 }
 
 export interface Promo {

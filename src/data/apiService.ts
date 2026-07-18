@@ -93,6 +93,7 @@ const mapDtoToUser = (data: any): User => {
     role,
     subscriptionType,
     idSocio: data.idSocio || undefined,
+    token: data.token,
   };
 };
 

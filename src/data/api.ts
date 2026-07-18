@@ -27,6 +27,20 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     config.headers['X-Requested-With'] = 'XMLHttpRequest';
+    
+    // Si tenemos un token guardado en localStorage, lo agregamos en las cabeceras
+    const savedUserStr = localStorage.getItem('fourgym_user');
+    if (savedUserStr) {
+      try {
+        const savedUser = JSON.parse(savedUserStr);
+        if (savedUser?.token) {
+          config.headers['Authorization'] = `Bearer ${savedUser.token}`;
+        }
+      } catch (e) {
+        // Ignorar si hay algún error de parseo
+      }
+    }
+    
     return config;
   },
   (error) => Promise.reject(error)
