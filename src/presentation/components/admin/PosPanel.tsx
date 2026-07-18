@@ -38,7 +38,6 @@ export const PosPanel: React.FC<PosPanelProps> = ({ user: _user }) => {
 
   // Pagination states
   const [catalogPage, setCatalogPage] = useState(1);
-  const [historyPage, setHistoryPage] = useState(1);
   const itemsPerPage = 8;
 
   // Checkout submission states
@@ -72,10 +71,8 @@ export const PosPanel: React.FC<PosPanelProps> = ({ user: _user }) => {
   const fetchSalesHistory = async () => {
     try {
       setLoadingSales(true);
-      setSalesError('');
       const data = await apiService.getVentasHistorial(startDate, endDate);
       setSales(data);
-      setHistoryPage(1); // Reset to first page on reload
     } catch (err: any) {
       setSalesError(err.message || 'Error al obtener historial de ventas.');
     } finally {
@@ -207,9 +204,6 @@ export const PosPanel: React.FC<PosPanelProps> = ({ user: _user }) => {
   const paginatedProducts = filteredProducts.slice(catalogStartIndex, catalogStartIndex + itemsPerPage);
   const catalogTotalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
-  const historyStartIndex = (historyPage - 1) * itemsPerPage;
-  const paginatedSales = sales.slice(historyStartIndex, historyStartIndex + itemsPerPage);
-  const historyTotalPages = Math.ceil(sales.length / itemsPerPage);
 
   if (cajaLoading) {
     return <div className="text-center py-12 text-slate-400 text-xs font-bold">Verificando sesión de caja...</div>;
